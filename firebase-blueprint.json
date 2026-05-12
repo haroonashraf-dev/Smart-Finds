@@ -1,0 +1,45 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "A smart home product available for purchase.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "slug": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "originalPrice": { "type": "number" },
+        "rating": { "type": "number" },
+        "reviewsCount": { "type": "number" },
+        "image": { "type": "string" },
+        "gallery": { "type": "array", "items": { "type": "string" } },
+        "category": { "type": "string" },
+        "affiliateLink": { "type": "string" },
+        "features": { "type": "array", "items": { "type": "string" } },
+        "trending": { "type": "boolean" }
+      },
+      "required": ["id", "title", "slug", "description", "price", "image", "category", "affiliateLink"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "A product category for organization.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" }
+      },
+      "required": ["name"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Store of smart products."
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Store of product categories."
+    }
+  }
+}

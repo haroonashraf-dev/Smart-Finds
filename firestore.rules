@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 1. Primitives & Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isEmailVerified() && request.auth.token.email == 'whynotmrijan11@gmail.com';
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // 2. Validation Blueprints
+    function isValidProduct(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.slug is string && data.slug.size() <= 200 &&
+             data.description is string && data.description.size() <= 10000 &&
+             data.price is number && data.price >= 0 &&
+             data.image is string && data.image.size() <= 5000 &&
+             data.category is string && data.category.size() <= 100 &&
+             data.affiliateLink is string && data.affiliateLink.size() <= 5000 &&
+             (data.get('originalPrice', 0) is number) &&
+             (data.get('rating', 5) is number) &&
+             (data.get('reviewsCount', 0) is number) &&
+             (data.get('trending', false) is bool) &&
+             (data.get('gallery', []) is list) &&
+             (data.get('features', []) is list);
+    }
+
+    function isValidCategory(data) {
+      return data.name is string && data.name.size() <= 100;
+    }
+
+    // 3. Collection Rules
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidId(productId) && isValidProduct(incoming()) && incoming().id == productId;
+      allow update: if isAdmin() && isValidId(productId) && isValidProduct(incoming()) && (
+        // Ensure ID and slug don't change
+        incoming().id == existing().id &&
+        incoming().slug == existing().slug &&
+        // Whitelist allowed fields for update
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'title', 'description', 'price', 'originalPrice', 'image', 'gallery', 
+          'category', 'affiliateLink', 'features', 'trending', 'rating', 'reviewsCount'
+        ])
+      );
+      allow delete: if isAdmin() && isValidId(productId);
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidId(categoryId) && isValidCategory(incoming());
+      allow update: if isAdmin() && isValidId(categoryId) && isValidCategory(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['name']);
+      allow delete: if isAdmin() && isValidId(categoryId);
+    }
+  }
+}
