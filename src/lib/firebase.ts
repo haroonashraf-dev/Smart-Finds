@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInAnonymously } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCI3K3LenzYz6QKZq0JNPTxUq9Xdv0y8Y0",
@@ -18,4 +18,5 @@ export const isFirebaseConfigured = !!firebaseConfig.apiKey && firebaseConfig.ap
 const app = isFirebaseConfigured ? initializeApp(firebaseConfig) : null;
 export const db = app ? getFirestore(app) : null;
 export const auth = app ? getAuth(app) : null;
+export { signInAnonymously };
 export const googleProvider = new GoogleAuthProvider();

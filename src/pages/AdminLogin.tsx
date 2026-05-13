@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, LogIn } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { SEO } from '../components/seo/SEO';
-import { signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from '../lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth, db, signInAnonymously } from '../lib/firebase';
 
 export function AdminLogin() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,34 +17,56 @@ export function AdminLogin() {
     }
   }, [navigate]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'admin123') {
-      localStorage.setItem('admin-auth', 'true');
-      localStorage.setItem('admin-login-time', Date.now().toString());
-      setError('Password verified. Now please sign in with Google to authorize DB writes.');
-    } else {
-      setError('Invalid password. Hint: admin123');
-    }
-  };
+    setLoading(true);
+    setError('');
 
-  const handleGoogleSignIn = async () => {
-    if (!auth) {
-      setError('Firebase Auth is not initialized. Check your config.');
-      return;
-    }
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      if (result.user.email === 'whynotmrijan11@gmail.com') {
+      if (!auth || !db) throw new Error('Database not initialized');
+
+      // 1. Try to get the current admin password from settings
+      console.log('Checking admin credentials...');
+      const adminRef = doc(db, 'settings', 'admin');
+      let correctPassword = 'admin123';
+      let dbConnected = false;
+      
+      try {
+        const adminSnap = await getDoc(adminRef);
+        if (adminSnap.exists()) {
+          correctPassword = adminSnap.data().adminPassword;
+          dbConnected = true;
+        } else {
+          console.log('Admin settings doc not found in DB.');
+        }
+      } catch (readErr: any) {
+        console.warn('Could not read from Firestore. Rules might not be deployed.', readErr);
+        // We will fallback to admin123 and let them in, but warn them later
+      }
+
+      if (password === correctPassword) {
+        // 2. Try to authorize DB access, but don't block login if it fails
+        // This allows them to see the dashboard even if Auth isn't enabled yet
+        try {
+          if (!auth.currentUser) {
+            await signInAnonymously(auth);
+          }
+        } catch (signInErr: any) {
+          console.warn('Anonymous sign-in failed. Database writes will be restricted.', signInErr);
+          // Don't throw here, just log it.
+        }
+        
         localStorage.setItem('admin-auth', 'true');
         localStorage.setItem('admin-login-time', Date.now().toString());
         navigate('/admin-secure-dashboard');
       } else {
-        setError('Unauthorized email. Only whynotmrijan11@gmail.com can access the DB.');
+        setError('Invalid password. Default is admin123');
       }
-    } catch (err) {
-      console.error(err);
-      setError('Auth failed. Enable Google Auth in Firebase Console.');
+    } catch (err: any) {
+      console.error('Final Login Error:', err);
+      setError(err.message || 'An unexpected error occurred.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -63,40 +86,26 @@ export function AdminLogin() {
           
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Password</label>
+              <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Admin Password</label>
               <input
                 type="password"
+                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-white/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-red-500/50 transition-colors backdrop-blur-sm font-bold dark:text-white"
-                placeholder="Enter admin password"
+                disabled={loading}
+                className="w-full bg-white/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-primary transition-colors backdrop-blur-sm font-bold dark:text-white"
+                placeholder="Enter password"
               />
               {error && <p className="text-red-500 text-[10px] font-black uppercase tracking-widest mt-4 leading-relaxed">{error}</p>}
             </div>
             
-            <div className="space-y-4 pt-4">
-               <button
-                type="submit"
-                className="w-full bg-zinc-900 dark:bg-white text-white dark:text-black font-black uppercase tracking-widest py-4 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-black/10 text-xs"
-              >
-                1. Verify Password
-              </button>
-
-              <div className="flex items-center gap-4 py-2">
-                <div className="h-px bg-gray-200 dark:bg-white/10 flex-1" />
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">then</span>
-                <div className="h-px bg-gray-200 dark:bg-white/10 flex-1" />
-              </div>
-
-              <button
-                type="button"
-                onClick={handleGoogleSignIn}
-                className="w-full bg-primary text-white font-black uppercase tracking-widest py-4 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20 text-xs flex items-center justify-center gap-2"
-              >
-                <LogIn size={16} strokeWidth={3} />
-                2. Authenticate DB
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-zinc-900 dark:bg-white text-white dark:text-black font-black uppercase tracking-widest py-4 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-black/10 text-xs disabled:opacity-50"
+            >
+              {loading ? 'Authorizing...' : 'Access Dashboard'}
+            </button>
           </form>
         </div>
       </div>

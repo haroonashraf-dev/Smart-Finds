@@ -14,17 +14,19 @@ import {
   X,
   Layers,
   Upload,
+  Settings,
   Image as ImageIcon
 } from 'lucide-react';
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
 import { useAnalyticsStore, ClickData } from '../store/analyticsStore';
 import { useProductStore } from '../store/productStore';
-import { auth } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { SEO } from '../components/seo/SEO';
 import { Product } from '../data/mockProducts';
 
-type DashboardTab = 'analytics' | 'products' | 'categories';
+type DashboardTab = 'analytics' | 'products' | 'categories' | 'settings';
 
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -47,6 +49,34 @@ export function AdminDashboard() {
   const [galleryInputs, setGalleryInputs] = useState<string[]>(['']);
   const [newCategory, setNewCategory] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [changePasswordData, setChangePasswordData] = useState({
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [dbStatus, setDbStatus] = useState<'connected' | 'locked' | 'unauthorized'>('connected');
+
+  useEffect(() => {
+    // Check if we can actually read/write to the DB
+    const checkDb = async () => {
+      if (!db || !auth) {
+        setDbStatus('locked');
+        return;
+      }
+      try {
+        await getDoc(doc(db, 'settings', 'admin'));
+        setDbStatus(auth.currentUser ? 'connected' : 'unauthorized');
+      } catch (err: any) {
+        console.error('Initial DB Check failed:', err);
+        if (err.code === 'permission-denied') {
+          setDbStatus('locked');
+        } else {
+          setDbStatus('unauthorized');
+        }
+      }
+    };
+    checkDb();
+  }, []);
 
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -85,9 +115,8 @@ export function AdminDashboard() {
     const authStorage = localStorage.getItem('admin-auth');
     if (!auth) return;
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user || user.email !== 'whynotmrijan11@gmail.com' || authStorage !== 'true') {
+      if (!user || authStorage !== 'true') {
         if (authStorage === 'true' && !user) {
-           // Wait a bit for auth to resolve or redirect
            return;
         }
         navigate('/admin-login');
@@ -196,6 +225,31 @@ export function AdminDashboard() {
     deleteCategory(category);
   };
 
+  const handleUpdatePassword = async (e: FormEvent) => {
+    e.preventDefault();
+    if (changePasswordData.newPassword !== changePasswordData.confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+    if (changePasswordData.newPassword.length < 1) {
+      alert('Password cannot be empty');
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      if (!db) throw new Error('DB not initialized');
+      await setDoc(doc(db, 'settings', 'admin'), { adminPassword: changePasswordData.newPassword });
+      alert('Admin password updated successfully!');
+      setChangePasswordData({ newPassword: '', confirmPassword: '' });
+    } catch (err: any) {
+      console.error(err);
+      alert('Failed to update password: ' + err.message);
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+
   if (!isAuth) return null;
 
   const totalViews = clicks.filter(c => c.type === 'view').length;
@@ -241,16 +295,22 @@ export function AdminDashboard() {
             </div>
             <div>
               <h1 className="font-black text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] dark:text-white pb-0.5">Admin Console</h1>
-              <p className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase leading-tight">SmartFinds Ops</p>
+              <div className="flex items-center gap-1.5">
+                <div className={`w-1.5 h-1.5 rounded-full ${dbStatus === 'connected' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+                <span className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase leading-tight tracking-wider">
+                  {dbStatus === 'connected' ? 'Live DB Connection' : dbStatus === 'locked' ? 'DB Locked (Paste Rules)' : 'Auth Required (Enable Anon)'}
+                </span>
+              </div>
             </div>
           </div>
 
           <div className="flex items-center gap-1 bg-gray-100 dark:bg-zinc-800 p-1 rounded-xl w-full md:w-auto overflow-x-auto no-scrollbar">
-             {(['analytics', 'products', 'categories'] as DashboardTab[]).map(tabId => {
+             {(['analytics', 'products', 'categories', 'settings'] as DashboardTab[]).map(tabId => {
                const tabConfig = {
                  analytics: { label: 'Analytics', icon: TrendingUp },
                  products: { label: 'Products', icon: Package },
                  categories: { label: 'Categories', icon: Layers },
+                 settings: { label: 'Settings', icon: Settings },
                }[tabId];
                const Icon = tabConfig.icon;
                return (
@@ -317,10 +377,11 @@ export function AdminDashboard() {
                 {/* Chart */}
                 <div className="lg:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-gray-100 dark:border-white/5 shadow-xl min-h-[400px]">
                   <h2 className="text-xl font-black mb-6 uppercase tracking-tighter dark:text-white">Traffic Overview</h2>
-                  <div className="h-[320px] w-full min-w-0">
+                  <div className="h-[320px] w-full min-w-0 relative">
                     {chartData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                      <div className="w-full h-full">
+                        <ResponsiveContainer width="99%" height="100%">
+                          <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.1} />
                             <XAxis 
                               dataKey="name" 
@@ -349,6 +410,7 @@ export function AdminDashboard() {
                             <Line type="monotone" dataKey="clicks" stroke="#3b82f6" strokeWidth={4} dot={{ r: 4, strokeWidth: 4, fill: '#fff' }} />
                           </LineChart>
                         </ResponsiveContainer>
+                      </div>
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-gray-500 font-bold uppercase tracking-widest text-[10px]">
                         No activity data available
@@ -645,6 +707,62 @@ export function AdminDashboard() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="max-w-md mx-auto space-y-8">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-primary/20 text-primary rounded-3xl flex items-center justify-center mb-4">
+                  <Settings size={32} />
+                </div>
+                <h2 className="text-3xl font-black dark:text-white uppercase tracking-tighter">Security Settings</h2>
+                <p className="text-gray-500 font-bold text-xs uppercase tracking-widest mt-2">Manage your admin credentials</p>
+              </div>
+
+              <div className="bg-white dark:bg-zinc-900 p-8 rounded-[32px] border border-gray-100 dark:border-white/5 shadow-2xl">
+                <h3 className="font-black text-xs uppercase tracking-widest text-primary mb-6">Change Login Password</h3>
+                
+                <form onSubmit={handleUpdatePassword} className="space-y-6">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-gray-400 mb-2">New Password</label>
+                    <input 
+                      type="password" required
+                      value={changePasswordData.newPassword}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setChangePasswordData({...changePasswordData, newPassword: e.target.value})}
+                      className="w-full bg-gray-50 dark:bg-zinc-800 p-4 rounded-xl border-none focus:ring-2 ring-primary dark:text-white font-bold"
+                      placeholder="Enter new password"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-gray-400 mb-2">Confirm New Password</label>
+                    <input 
+                      type="password" required
+                      value={changePasswordData.confirmPassword}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setChangePasswordData({...changePasswordData, confirmPassword: e.target.value})}
+                      className="w-full bg-gray-50 dark:bg-zinc-800 p-4 rounded-xl border-none focus:ring-2 ring-primary dark:text-white font-bold"
+                      placeholder="Confirm new password"
+                    />
+                  </div>
+                  
+                  <button 
+                    type="submit" 
+                    disabled={isUpdatingPassword}
+                    className="w-full bg-zinc-900 dark:bg-white text-white dark:text-black py-4 rounded-xl font-black uppercase tracking-widest shadow-xl active:scale-[0.98] transition-all disabled:opacity-50"
+                  >
+                    {isUpdatingPassword ? 'Updating...' : 'Save New Password'}
+                  </button>
+                </form>
+
+                <div className="mt-8 pt-8 border-t border-gray-100 dark:border-white/5 space-y-4">
+                  <div className="bg-amber-100/50 dark:bg-amber-500/10 p-4 rounded-2xl border border-amber-200/50 dark:border-amber-500/20">
+                    <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 leading-relaxed uppercase tracking-widest">
+                      <span className="block mb-1">⚠️ Warning</span>
+                      Changing this will instantly require the new password for your next login attempt.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
