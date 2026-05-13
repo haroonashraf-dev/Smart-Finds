@@ -30,77 +30,113 @@ export function Home() {
       />
       
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-10 md:py-16 bg-white dark:bg-black">
-        <div className="container relative z-10 mx-auto px-4 flex flex-col lg:flex-row items-center gap-8 lg:gap-16">
+      <section className="relative min-h-[85vh] flex items-center overflow-hidden py-16 md:py-24 bg-white dark:bg-[#050505]">
+        {/* Atmospheric Background Effects */}
+        <div className="atmospheric-blur opacity-60 dark:opacity-40" />
+        <div className="absolute top-0 left-0 w-full h-full z-0 opacity-30 dark:opacity-20 pointer-events-none">
+          <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-primary/20 blur-[120px] rounded-full animate-pulse" />
+          <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-orange-500/10 blur-[100px] rounded-full" />
+        </div>
+
+        <div className="container relative z-10 mx-auto px-4 flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
           <div className="flex-1 text-center lg:text-left">
             <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/10 border border-primary/20 text-primary text-[11px] font-black uppercase tracking-[0.2em] rounded-lg mb-6 shadow-sm">
-                <Zap size={14} className="fill-current" />
-                Featured SuperDeals
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-md border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.3em] rounded-full mb-8 shadow-sm">
+                <Zap size={14} className="fill-current animate-pulse" />
+                Next-Gen Smart Living
               </div>
-              <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight leading-[1] mb-8 text-gray-900 dark:text-white">
-                CURATED <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-500">
-                  SMART FINDS.
-                </span>
+              <h1 className="text-6xl sm:text-8xl lg:text-[110px] font-black tracking-[-0.04em] leading-[0.85] mb-10 text-zinc-900 dark:text-white uppercase font-display">
+                FUTURE <br />
+                <span className="text-primary italic relative">
+                  SMART
+                  <span className="absolute -bottom-2 left-0 w-full h-1 bg-primary/20 blur-sm rounded-full" />
+                </span> <br />
+                FINDS.
               </h1>
-              <p className="text-lg lg:text-xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-medium">
-                Premium gadgets and home innovations verified by experts. <br className="hidden md:block" /> Get the best smart tech, hand-picked for quality.
+              <p className="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-400 mb-12 max-w-2xl mx-auto lg:mx-0 leading-tight font-medium tracking-tight">
+                Premium gadgets and home innovations verified by experts. <br className="hidden md:block" /> Experience the future of tech, hand-picked for quality.
               </p>
               
-              <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
-                <Link to="/categories" className="w-full sm:w-auto px-10 py-5 bg-primary hover:bg-red-600 text-white font-black rounded-2xl shadow-2xl shadow-primary/30 transition-all flex items-center justify-center gap-3 group active:scale-95">
-                  Explore SuperDeals
-                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              <div className="flex flex-col sm:flex-row items-center gap-6 justify-center lg:justify-start">
+                <Link 
+                  to="/categories" 
+                  className="w-full sm:w-auto px-12 py-6 bg-primary hover:bg-zinc-900 dark:hover:bg-white dark:hover:text-black text-white font-black rounded-full shadow-[0_20px_50px_rgba(255,71,71,0.3)] transition-all duration-500 flex items-center justify-center gap-4 group active:scale-95"
+                >
+                  <ShoppingBag size={20} />
+                  SHOP CURATED DEALS
+                  <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
                 </Link>
-                <div className="flex items-center gap-4 bg-gray-100 dark:bg-zinc-900 px-6 py-4 rounded-2xl border border-gray-200/50 dark:border-white/5">
-                  <div className="flex -space-x-2">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="w-8 h-8 rounded-full border-2 border-white dark:border-zinc-900 bg-gray-200 overflow-hidden">
-                        <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="User" />
+                
+                <div className="flex items-center gap-5 glass-card px-8 py-5 rounded-full">
+                  <div className="flex -space-x-3">
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className="w-10 h-10 rounded-full border-2 border-white dark:border-zinc-900 bg-zinc-200 overflow-hidden shadow-md">
+                        <img src={`https://i.pravatar.cc/100?img=${i+20}`} alt="User" />
                       </div>
                     ))}
                   </div>
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">+2.4k Joining Today</span>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">Community</span>
+                    <span className="text-sm font-black text-zinc-900 dark:text-white uppercase tracking-tighter">5.2k+ Active Fans</span>
+                  </div>
                 </div>
               </div>
             </motion.div>
           </div>
           
-          <div className="flex-1 w-full max-w-[400px] sm:max-w-xl lg:max-w-none relative mt-12 lg:mt-0">
+          <div className="flex-1 w-full relative">
             <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, type: "spring" }}
-              className="relative aspect-square md:aspect-[4/3] w-full rounded-[40px] md:rounded-[60px] bg-gradient-to-br from-primary/5 to-orange-500/5 border border-primary/20 backdrop-blur-3xl p-6 md:p-10 flex flex-col items-center justify-center group shadow-[0_32px_64px_-16px_rgba(255,71,71,0.2)] overflow-hidden"
+              initial={{ opacity: 0, scale: 0.9, rotate: -2 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              transition={{ duration: 1, type: "spring", bounce: 0.4 }}
+              className="relative aspect-[4/5] w-full max-w-[500px] mx-auto overflow-hidden group"
             >
-              <div className="absolute top-8 left-8 bg-gray-900 text-white font-black text-xs px-4 py-2 rounded-xl z-20 shadow-xl border border-white/10 uppercase tracking-widest">
-                Top Rated Choice
-              </div>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] bg-gradient-radial from-primary/10 to-transparent blur-3xl opacity-50"></div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent z-10 pointer-events-none group-hover:opacity-0 transition-opacity duration-1000" />
               
-              <div className="w-full h-full rounded-[30px] md:rounded-[40px] overflow-hidden border-4 border-white dark:border-zinc-800 shadow-2xl relative z-10 group-hover:rotate-1 transition-transform duration-700">
-                 <img 
-                   src="https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" 
-                   alt="Choice Smart Find" 
-                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
-                 />
-              </div>
+              <img 
+                src="https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" 
+                alt="Choice Smart Find" 
+                className="w-full h-full object-cover rounded-[60px] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.5)] transition-transform duration-[2000ms] group-hover:scale-110"
+              />
 
-              {/* Floating Stat Card */}
-              <div className="absolute bottom-8 right-8 bg-white dark:bg-zinc-900 p-4 rounded-2xl shadow-2xl z-20 border border-gray-100 dark:border-white/5 animate-bounce-slow">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-orange-100 text-orange-500 rounded-lg"><Zap size={18} className="fill-current" /></div>
+              <div className="absolute inset-0 rounded-[60px] border-[1px] border-white/20 z-20 pointer-events-none" />
+
+              {/* Floating Highlight Cards */}
+              <motion.div 
+                animate={{ y: [0, -20, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute top-10 left-[-20px] glass-card p-5 rounded-3xl z-30 shadow-2xl border-white/10 hidden sm:block"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg overflow-hidden">
+                    <Zap size={24} className="fill-current" />
+                  </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Sold (24h)</p>
-                    <p className="text-lg font-black text-gray-900 dark:text-white">1,500+</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Flash Sale</p>
+                    <p className="text-lg font-black text-zinc-900 dark:text-white">-40% Today</p>
                   </div>
                 </div>
-              </div>
+              </motion.div>
+
+              <motion.div 
+                animate={{ y: [0, 20, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                className="absolute bottom-10 right-[-20px] glass-card p-5 rounded-3xl z-30 shadow-2xl border-white/10 hidden sm:block"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-zinc-900 rounded-2xl flex items-center justify-center text-white shadow-lg overflow-hidden border border-white/10">
+                    <ShieldCheck size={24} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Verified</p>
+                    <p className="text-lg font-black text-zinc-900 dark:text-white">Smart Quality</p>
+                  </div>
+                </div>
+              </motion.div>
             </motion.div>
           </div>
         </div>
