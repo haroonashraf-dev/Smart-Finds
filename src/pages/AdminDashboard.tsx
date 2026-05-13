@@ -19,6 +19,8 @@ import {
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
 import { useAnalyticsStore, ClickData } from '../store/analyticsStore';
 import { useProductStore } from '../store/productStore';
+import { auth } from '../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import { SEO } from '../components/seo/SEO';
 import { Product } from '../data/mockProducts';
 
@@ -35,15 +37,11 @@ export function AdminDashboard() {
   const [newProduct, setNewProduct] = useState<Partial<Product>>({
     title: '',
     description: '',
-    price: 0,
-    originalPrice: 0,
     category: categories[0] || '',
     image: '',
     affiliateLink: '',
     features: [''],
     trending: false,
-    rating: 4.5,
-    reviewsCount: 0,
     gallery: []
   });
   const [galleryInputs, setGalleryInputs] = useState<string[]>(['']);
@@ -84,19 +82,26 @@ export function AdminDashboard() {
   };
 
   useEffect(() => {
-    const auth = localStorage.getItem('admin-auth');
-    if (auth !== 'true') {
-      navigate('/admin-login');
-      return;
-    }
+    const authStorage = localStorage.getItem('admin-auth');
+    if (!auth) return;
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user || user.email !== 'whynotmrijan11@gmail.com' || authStorage !== 'true') {
+        if (authStorage === 'true' && !user) {
+           // Wait a bit for auth to resolve or redirect
+           return;
+        }
+        navigate('/admin-login');
+      } else {
+        setIsAuth(true);
+      }
+    });
 
     const loginTime = parseInt(localStorage.getItem('admin-login-time') || '0');
     if (Date.now() - loginTime > 3600000) {
       handleLogout();
-      return;
     }
 
-    setIsAuth(true);
+    return () => unsubscribe();
   }, [navigate]);
 
   const handleLogout = () => {
@@ -119,6 +124,13 @@ export function AdminDashboard() {
     setGalleryInputs(galleryInputs.filter((_: string, i: number) => i !== index));
   };
 
+  const [formInputs, setFormInputs] = useState({
+    price: '0',
+    originalPrice: '0',
+    rating: '4.5',
+    reviewsCount: '0'
+  });
+
   const handleAddProduct = async (e: FormEvent) => {
     e.preventDefault();
     const id = `p${Date.now()}`;
@@ -127,27 +139,34 @@ export function AdminDashboard() {
     // Filter out empty gallery inputs
     const gallery = galleryInputs.filter((url: string) => url.trim() !== '');
 
+    const productData: Product = {
+      ...newProduct,
+      id,
+      slug,
+      price: parseFloat(formInputs.price) || 0,
+      originalPrice: parseFloat(formInputs.originalPrice) || 0,
+      rating: parseFloat(formInputs.rating) || 4.5,
+      reviewsCount: parseInt(formInputs.reviewsCount) || 0,
+      gallery: gallery.length > 0 ? gallery : [newProduct.image || ''],
+    } as Product;
+
     try {
-      await addProduct({
-        ...newProduct,
-        id,
-        slug,
-        gallery: gallery.length > 0 ? gallery : [newProduct.image || ''],
-      } as Product);
+      await addProduct(productData);
 
       setNewProduct({
         title: '',
         description: '',
-        price: 0,
-        originalPrice: 0,
         category: categories[0] || '',
         image: '',
         affiliateLink: '',
         features: [''],
         trending: false,
-        rating: 4.5,
-        reviewsCount: 0,
-        gallery: []
+      });
+      setFormInputs({
+        price: '0',
+        originalPrice: '0',
+        rating: '4.5',
+        reviewsCount: '0'
       });
       setGalleryInputs(['']);
       setShowAddForm(false);
@@ -298,38 +317,38 @@ export function AdminDashboard() {
                 {/* Chart */}
                 <div className="lg:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-gray-100 dark:border-white/5 shadow-xl min-h-[400px]">
                   <h2 className="text-xl font-black mb-6 uppercase tracking-tighter dark:text-white">Traffic Overview</h2>
-                  <div className="h-[320px] w-full relative">
+                  <div className="h-[320px] w-full min-w-0">
                     {chartData.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.1} />
-                          <XAxis 
-                            dataKey="name" 
-                            stroke="#888" 
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fontSize: 10, fontWeight: 900 }}
-                          />
-                          <YAxis 
-                            stroke="#888" 
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fontSize: 10, fontWeight: 900 }}
-                          />
-                          <Tooltip 
-                            contentStyle={{ 
-                              backgroundColor: '#18181b', 
-                              border: 'none', 
-                              borderRadius: '16px', 
-                              color: '#fff',
-                              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
-                            }}
-                            itemStyle={{ color: '#fff', fontWeight: 900, fontSize: 12 }}
-                          />
-                          <Line type="monotone" dataKey="views" stroke="#ef4444" strokeWidth={4} dot={{ r: 4, strokeWidth: 4, fill: '#fff' }} activeDot={{ r: 8 }} />
-                          <Line type="monotone" dataKey="clicks" stroke="#3b82f6" strokeWidth={4} dot={{ r: 4, strokeWidth: 4, fill: '#fff' }} />
-                        </LineChart>
-                      </ResponsiveContainer>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.1} />
+                            <XAxis 
+                              dataKey="name" 
+                              stroke="#888" 
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fontSize: 10, fontWeight: 900 }}
+                            />
+                            <YAxis 
+                              stroke="#888" 
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fontSize: 10, fontWeight: 900 }}
+                            />
+                            <Tooltip 
+                              contentStyle={{ 
+                                backgroundColor: '#18181b', 
+                                border: 'none', 
+                                borderRadius: '16px', 
+                                color: '#fff',
+                                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                              }}
+                              itemStyle={{ color: '#fff', fontWeight: 900, fontSize: 12 }}
+                            />
+                            <Line type="monotone" dataKey="views" stroke="#ef4444" strokeWidth={4} dot={{ r: 4, strokeWidth: 4, fill: '#fff' }} activeDot={{ r: 8 }} />
+                            <Line type="monotone" dataKey="clicks" stroke="#3b82f6" strokeWidth={4} dot={{ r: 4, strokeWidth: 4, fill: '#fff' }} />
+                          </LineChart>
+                        </ResponsiveContainer>
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-gray-500 font-bold uppercase tracking-widest text-[10px]">
                         No activity data available
@@ -403,8 +422,8 @@ export function AdminDashboard() {
                           <label className="block text-[10px] font-black uppercase text-gray-400 mb-2">Price ($)</label>
                           <input 
                             type="number" step="0.01" required
-                            value={newProduct.price}
-                            onChange={(e: ChangeEvent<HTMLInputElement>) => setNewProduct({...newProduct, price: parseFloat(e.target.value)})}
+                            value={formInputs.price === 'NaN' ? '' : formInputs.price}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) => setFormInputs({...formInputs, price: e.target.value})}
                             className="w-full bg-gray-50 dark:bg-zinc-800 p-4 rounded-xl border-none focus:ring-2 ring-primary dark:text-white font-bold"
                           />
                         </div>
@@ -412,8 +431,8 @@ export function AdminDashboard() {
                           <label className="block text-[10px] font-black uppercase text-gray-400 mb-2">Retail Price ($)</label>
                           <input 
                             type="number" step="0.01"
-                            value={newProduct.originalPrice}
-                            onChange={(e: ChangeEvent<HTMLInputElement>) => setNewProduct({...newProduct, originalPrice: parseFloat(e.target.value)})}
+                            value={formInputs.originalPrice === 'NaN' ? '' : formInputs.originalPrice}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) => setFormInputs({...formInputs, originalPrice: e.target.value})}
                             className="w-full bg-gray-50 dark:bg-zinc-800 p-4 rounded-xl border-none focus:ring-2 ring-primary dark:text-white font-bold"
                           />
                         </div>

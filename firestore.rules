@@ -38,7 +38,7 @@ service cloud.firestore {
              data.slug is string && data.slug.size() <= 200 &&
              data.description is string && data.description.size() <= 10000 &&
              data.price is number && data.price >= 0 &&
-             data.image is string && data.image.size() <= 5000 &&
+             data.image is string && data.image.size() <= 2000000 &&
              data.category is string && data.category.size() <= 100 &&
              data.affiliateLink is string && data.affiliateLink.size() <= 5000 &&
              (data.get('originalPrice', 0) is number) &&

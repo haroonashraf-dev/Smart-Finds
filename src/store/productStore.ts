@@ -4,6 +4,7 @@ import { auth, db, isFirebaseConfigured } from '../lib/firebase';
 import { 
   collection, 
   onSnapshot,
+  getDocs,
   addDoc, 
   updateDoc, 
   deleteDoc, 
@@ -48,7 +49,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
       email: auth?.currentUser?.email || null,
       emailVerified: auth?.currentUser?.emailVerified || null,
       isAnonymous: auth?.currentUser?.isAnonymous || null,
-      providerInfo: auth?.currentUser?.providerData.map(p => ({
+      providerInfo: auth?.currentUser?.providerData?.map(p => ({
         providerId: p.providerId,
         email: p.email
       })) || []
@@ -156,14 +157,17 @@ export const useProductStore = create<ProductState>()((set, get) => ({
   setSelectedCategory: (category) => set({ selectedCategory: category }),
   
   addProduct: async (product) => {
-    const newProducts = [product, ...get().products];
+    const previousProducts = get().products;
+    const newProducts = [product, ...previousProducts];
     set({ products: newProducts });
 
     if (isFirebaseConfigured && db) {
       try {
         await setDoc(doc(db!, 'products', product.id), product);
       } catch (error) {
+        set({ products: previousProducts });
         handleFirestoreError(error, OperationType.WRITE, `products/${product.id}`);
+        throw error;
       }
     } else {
       await fetch('/api/data', {
@@ -175,14 +179,17 @@ export const useProductStore = create<ProductState>()((set, get) => ({
   },
 
   updateProduct: async (id, updatedFields) => {
-    const newProducts = get().products.map(p => p.id === id ? { ...p, ...updatedFields } : p);
+    const previousProducts = get().products;
+    const newProducts = previousProducts.map(p => p.id === id ? { ...p, ...updatedFields } : p);
     set({ products: newProducts });
 
     if (isFirebaseConfigured && db) {
       try {
         await updateDoc(doc(db!, 'products', id), updatedFields);
       } catch (error) {
+        set({ products: previousProducts });
         handleFirestoreError(error, OperationType.UPDATE, `products/${id}`);
+        throw error;
       }
     } else {
       await fetch('/api/data', {
@@ -194,14 +201,17 @@ export const useProductStore = create<ProductState>()((set, get) => ({
   },
 
   deleteProduct: async (id) => {
-    const newProducts = get().products.filter(p => p.id !== id);
+    const previousProducts = get().products;
+    const newProducts = previousProducts.filter(p => p.id !== id);
     set({ products: newProducts });
 
     if (isFirebaseConfigured && db) {
       try {
         await deleteDoc(doc(db!, 'products', id));
       } catch (error) {
+        set({ products: previousProducts });
         handleFirestoreError(error, OperationType.DELETE, `products/${id}`);
+        throw error;
       }
     } else {
       await fetch('/api/data', {
