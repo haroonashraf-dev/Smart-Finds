@@ -3,7 +3,7 @@ import { MOCK_PRODUCTS, Product, CATEGORIES } from '../data/mockProducts';
 import { auth, db, isFirebaseConfigured } from '../lib/firebase';
 import { 
   collection, 
-  getDocs, 
+  onSnapshot,
   addDoc, 
   updateDoc, 
   deleteDoc, 
@@ -85,77 +85,71 @@ export const useProductStore = create<ProductState>()((set, get) => ({
   isLoading: true,
   
   initialize: async () => {
-    console.log('🔄 Initializing Product Store...');
+    // Prevent double initialization if already listening
+    if ((get() as any)._prodUnsubscribe) return;
+
+    console.log('🔄 Initializing Real-time Product Store...');
     set({ isLoading: true });
     
     if (isFirebaseConfigured && db) {
       try {
-        console.log('📡 Fetching Fresh Data from Firestore...');
-        const prodSnap = await getDocs(collection(db!, 'products'));
-        const catSnap = await getDocs(collection(db!, 'categories'));
-        
-        console.log(`📊 Snapshot Stats: Products=${prodSnap.docs.length}, Categories=${catSnap.docs.length}`);
-
-        const fetchedProducts = prodSnap.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            title: data.title || 'Untitled Product',
-            slug: data.slug || doc.id,
-            description: data.description || '',
-            price: Number(data.price) || 0,
-            originalPrice: Number(data.originalPrice) || 0,
-            rating: Number(data.rating) || 4.5,
-            reviewsCount: Number(data.reviewsCount) || 0,
-            image: data.image || '',
-            gallery: data.gallery || [],
-            category: data.category || 'General',
-            affiliateLink: data.affiliateLink || '#',
-            features: data.features || [],
-            trending: !!data.trending
-          } as Product;
-        });
-        
-        const fetchedCategoriesFromDB = catSnap.docs.map(doc => doc.data().name as string).filter(Boolean);
-        let categories = Array.from(new Set(fetchedCategoriesFromDB));
-
-        if (fetchedProducts.length === 0) {
-          console.warn('⚠️ Firestore is empty! Seeding initial data...');
-          // Seed products
-          const seedPromises = MOCK_PRODUCTS.map(p => setDoc(doc(db!, 'products', p.id), p));
-          await Promise.all(seedPromises);
-          
-          // Seed categories
-          const uniqueCats = Array.from(new Set(MOCK_PRODUCTS.map(p => p.category)));
-          const catPromises = uniqueCats.map(c => addDoc(collection(db!, 'categories'), { name: c }));
-          await Promise.all(catPromises);
-          
-          set({ products: MOCK_PRODUCTS, categories: uniqueCats, isLoading: false });
-          console.log('✅ Seeding Complete');
-        } else {
-          // If we have products but no categories in DB, infer from products
-          if (categories.length === 0) {
-            categories = Array.from(new Set(fetchedProducts.map(p => p.category)));
-            console.log('ℹ️ Inferred categories from products:', categories);
-          }
-          
-          set({ 
-            products: fetchedProducts, 
-            categories: categories.length > 0 ? categories : CATEGORIES,
-            isLoading: false 
+        // Listen to Products
+        const prodUnsubscribe = onSnapshot(collection(db!, 'products'), (snapshot) => {
+          const fetchedProducts = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              title: data.title || 'Untitled Product',
+              slug: data.slug || doc.id,
+              description: data.description || '',
+              price: Number(data.price) || 0,
+              originalPrice: Number(data.originalPrice) || 0,
+              rating: Number(data.rating) || 4.5,
+              reviewsCount: Number(data.reviewsCount) || 0,
+              image: data.image || '',
+              gallery: data.gallery || [],
+              category: data.category || 'General',
+              affiliateLink: data.affiliateLink || '#',
+              features: data.features || [],
+              trending: !!data.trending
+            } as Product;
           });
-          console.log('✅ Store Initialized with Firestore Data');
-        }
-        return;
-      } catch (error) {
-        handleFirestoreError(error, OperationType.GET, 'products/categories');
-        console.error('❌ Firebase Load Failed. Falling back to local data.');
-      }
-    }
 
-    // Fallback or No Firebase Case
-    console.log('📦 Using Local Mock Data Fallback');
-    set({ products: MOCK_PRODUCTS, categories: CATEGORIES, isLoading: false });
+          // Seed if empty and first load
+          if (fetchedProducts.length === 0 && get().isLoading) {
+            console.warn('⚠️ Firestore Products empty! Seeding...');
+            MOCK_PRODUCTS.forEach(p => setDoc(doc(db!, 'products', p.id), p));
+          } else {
+            set({ products: fetchedProducts, isLoading: false });
+          }
+        }, (error) => {
+          handleFirestoreError(error, OperationType.LIST, 'products');
+          set({ isLoading: false });
+        });
+
+        // Listen to Categories
+        const catUnsubscribe = onSnapshot(collection(db!, 'categories'), (snapshot) => {
+          const fetchedCats = snapshot.docs.map(doc => doc.data().name as string).filter(Boolean);
+          if (fetchedCats.length > 0) {
+            set({ categories: Array.from(new Set(fetchedCats)) });
+          } else {
+           // Infer from products if categories collection is empty
+           const inferred = Array.from(new Set(get().products.map(p => p.category)));
+           if (inferred.length > 0) set({ categories: inferred });
+          }
+        });
+
+        // Store unsubscribe functions in the state (using any to avoid type noise for internal refs)
+        (set as any)({ _prodUnsubscribe: prodUnsubscribe, _catUnsubscribe: catUnsubscribe });
+
+      } catch (error) {
+        handleFirestoreError(error, OperationType.GET, 'init-listeners');
+        set({ products: MOCK_PRODUCTS, categories: CATEGORIES, isLoading: false });
+      }
+    } else {
+      console.log('📦 Using Local Mock Data Fallback');
+      set({ products: MOCK_PRODUCTS, categories: CATEGORIES, isLoading: false });
+    }
   },
 
   setSearchQuery: (query) => set({ searchQuery: query }),

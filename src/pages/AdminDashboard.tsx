@@ -16,7 +16,7 @@ import {
   Upload,
   Image as ImageIcon
 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
+import { XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
 import { useAnalyticsStore, ClickData } from '../store/analyticsStore';
 import { useProductStore } from '../store/productStore';
 import { SEO } from '../components/seo/SEO';
@@ -119,7 +119,7 @@ export function AdminDashboard() {
     setGalleryInputs(galleryInputs.filter((_: string, i: number) => i !== index));
   };
 
-  const handleAddProduct = (e: FormEvent) => {
+  const handleAddProduct = async (e: FormEvent) => {
     e.preventDefault();
     const id = `p${Date.now()}`;
     const slug = newProduct.title?.toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, '') || id;
@@ -127,30 +127,35 @@ export function AdminDashboard() {
     // Filter out empty gallery inputs
     const gallery = galleryInputs.filter((url: string) => url.trim() !== '');
 
-    addProduct({
-      ...newProduct,
-      id,
-      slug,
-      gallery: gallery.length > 0 ? gallery : [newProduct.image || ''],
-    } as Product);
+    try {
+      await addProduct({
+        ...newProduct,
+        id,
+        slug,
+        gallery: gallery.length > 0 ? gallery : [newProduct.image || ''],
+      } as Product);
 
-    setNewProduct({
-      title: '',
-      description: '',
-      price: 0,
-      originalPrice: 0,
-      category: categories[0] || '',
-      image: '',
-      affiliateLink: '',
-      features: [''],
-      trending: false,
-      rating: 4.5,
-      reviewsCount: 0,
-      gallery: []
-    });
-    setGalleryInputs(['']);
-    setShowAddForm(false);
-    alert('Product added successfully!');
+      setNewProduct({
+        title: '',
+        description: '',
+        price: 0,
+        originalPrice: 0,
+        category: categories[0] || '',
+        image: '',
+        affiliateLink: '',
+        features: [''],
+        trending: false,
+        rating: 4.5,
+        reviewsCount: 0,
+        gallery: []
+      });
+      setGalleryInputs(['']);
+      setShowAddForm(false);
+      alert('Product deployed successfully to global storefront!');
+    } catch (err) {
+      console.error("Failed to add product:", err);
+      alert('Error deploying product. Check console for details.');
+    }
   };
 
   const handleAddCategory = (e: FormEvent) => {
@@ -293,9 +298,9 @@ export function AdminDashboard() {
                 {/* Chart */}
                 <div className="lg:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-gray-100 dark:border-white/5 shadow-xl min-h-[400px]">
                   <h2 className="text-xl font-black mb-6 uppercase tracking-tighter dark:text-white">Traffic Overview</h2>
-                  <div className="h-80 w-full relative">
+                  <div className="h-[320px] w-full relative">
                     {chartData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                      <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.1} />
                           <XAxis 
