@@ -78,12 +78,44 @@ export function AdminDashboard() {
     checkDb();
   }, []);
 
-  const fileToBase64 = (file: File): Promise<string> => {
+  const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Max dimensions for the image (good balance of quality/size)
+          const MAX_SIZE = 1000;
+
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // dataURL with 0.6 quality is usually around 50-150KB for 1000px
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          resolve(dataUrl);
+        };
+      };
+      reader.onerror = (error) => reject(error);
     });
   };
 
@@ -91,10 +123,11 @@ export function AdminDashboard() {
     const file = e.target.files?.[0];
     if (file) {
       try {
-        const base64 = await fileToBase64(file);
+        const base64 = await compressImage(file);
         setNewProduct({ ...newProduct, image: base64 });
       } catch (err) {
         console.error("Error uploading image:", err);
+        alert("Failed to process image. Try a smaller file.");
       }
     }
   };
@@ -103,10 +136,11 @@ export function AdminDashboard() {
     const file = e.target.files?.[0];
     if (file) {
       try {
-        const base64 = await fileToBase64(file);
+        const base64 = await compressImage(file);
         updateGalleryInput(index, base64);
       } catch (err) {
         console.error("Error uploading gallery image:", err);
+        alert("Failed to process image. Try a smaller file.");
       }
     }
   };
