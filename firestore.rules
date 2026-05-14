@@ -50,6 +50,13 @@ service cloud.firestore {
       return data.name is string && data.name.size() <= 100;
     }
 
+    function isValidInteraction(data) {
+      return data.productId is string && data.productId.size() <= 128 &&
+             data.productName is string && data.productName.size() <= 200 &&
+             data.type in ['view', 'affiliate_click'] &&
+             data.timestamp == request.time;
+    }
+
     function isValidSettings(data) {
       return data.adminPassword is string && data.adminPassword.size() >= 1 && data.adminPassword.size() <= 100;
     }
@@ -87,6 +94,12 @@ service cloud.firestore {
       allow update: if isAdmin() && isValidId(categoryId) && isValidCategory(incoming()) &&
                     incoming().diff(existing()).affectedKeys().hasOnly(['name']);
       allow delete: if isAdmin() && isValidId(categoryId);
+    }
+
+    match /interactions/{interactionId} {
+      allow create: if isValidInteraction(incoming());
+      allow read: if isAdmin();
+      allow update, delete: if false;
     }
   }
 }

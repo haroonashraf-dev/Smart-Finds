@@ -1,4 +1,17 @@
 import { create } from 'zustand';
+import { 
+  collection, 
+  addDoc, 
+  serverTimestamp, 
+  query, 
+  where, 
+  getDocs, 
+  orderBy, 
+  limit,
+  Timestamp,
+  onSnapshot
+} from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export interface ClickData {
   productId: string;
@@ -9,30 +22,93 @@ export interface ClickData {
 
 interface AnalyticsState {
   clicks: ClickData[];
-  logClick: (productId: string, productName: string, type: 'view' | 'affiliate_click') => void;
-  getClicksForLastDays: (days: number) => ClickData[];
+  loading: boolean;
+  logInteraction: (productId: string, productName: string, type: 'view' | 'affiliate_click') => Promise<void>;
+  fetchInteractions: (days?: number) => Promise<void>;
+  subscribeToInteractions: (days?: number) => () => void;
   getTopProducts: () => { name: string; views: number; clicks: number }[];
 }
 
 export const useAnalyticsStore = create<AnalyticsState>((set, get) => {
-  // Load initial data from localStorage
-  const savedData = localStorage.getItem('smart-living-analytics');
-  const initialClicks: ClickData[] = savedData ? JSON.parse(savedData) : [];
-
   return {
-    clicks: initialClicks,
-    logClick: (productId, productName, type) => {
-      set((state) => {
-        const newClicks = [...state.clicks, { productId, productName, timestamp: Date.now(), type }];
-        localStorage.setItem('smart-living-analytics', JSON.stringify(newClicks));
-        return { clicks: newClicks };
+    clicks: [],
+    loading: false,
+
+    logInteraction: async (productId, productName, type) => {
+      try {
+        if (!db) return;
+        await addDoc(collection(db, 'interactions'), {
+          productId,
+          productName,
+          type,
+          timestamp: serverTimestamp()
+        });
+      } catch (err) {
+        console.error('Failed to log interaction:', err);
+      }
+    },
+
+    fetchInteractions: async (days = 30) => {
+      if (!db) return;
+      set({ loading: true });
+      try {
+        const msInDay = 24 * 60 * 60 * 1000;
+        const cutoffDate = new Date(Date.now() - days * msInDay);
+        
+        const q = query(
+          collection(db, 'interactions'),
+          where('timestamp', '>=', cutoffDate),
+          orderBy('timestamp', 'desc')
+        );
+        
+        const snapshot = await getDocs(q);
+        const clicks = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            productId: data.productId,
+            productName: data.productName,
+            type: data.type,
+            timestamp: (data.timestamp as Timestamp)?.toMillis() || Date.now()
+          };
+        }) as ClickData[];
+        
+        set({ clicks, loading: false });
+      } catch (err) {
+        console.error('Failed to fetch interactions:', err);
+        set({ loading: false });
+      }
+    },
+
+    subscribeToInteractions: (days = 30) => {
+      if (!db) return () => {};
+      set({ loading: true });
+      
+      const msInDay = 24 * 60 * 60 * 1000;
+      const cutoffDate = new Date(Date.now() - days * msInDay);
+      
+      const q = query(
+        collection(db, 'interactions'),
+        where('timestamp', '>=', cutoffDate),
+        orderBy('timestamp', 'desc')
+      );
+      
+      return onSnapshot(q, (snapshot) => {
+        const clicks = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            productId: data.productId,
+            productName: data.productName,
+            type: data.type,
+            timestamp: (data.timestamp as Timestamp)?.toMillis() || Date.now()
+          };
+        }) as ClickData[];
+        set({ clicks, loading: false });
+      }, (err) => {
+        console.error('Interactions subscription error:', err);
+        set({ loading: false });
       });
     },
-    getClicksForLastDays: (days: number) => {
-      const msInDay = 24 * 60 * 60 * 1000;
-      const cutoffTime = Date.now() - days * msInDay;
-      return get().clicks.filter(c => c.timestamp >= cutoffTime);
-    },
+
     getTopProducts: () => {
       const stats: Record<string, { name: string; views: number; clicks: number }> = {};
       get().clicks.forEach(click => {

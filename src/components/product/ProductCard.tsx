@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Star, MessageCircle, Heart, Zap, Share2 } from 'lucide-react';
@@ -12,11 +12,11 @@ interface ProductCardProps {
   key?: React.Key;
 }
 
-export function ProductCard({ product, index = 0 }: ProductCardProps) {
-  const logClick = useAnalyticsStore((state) => state.logClick);
+export const ProductCard = memo(({ product, index = 0 }: ProductCardProps) => {
+  const logInteraction = useAnalyticsStore((state) => state.logInteraction);
 
   const handleAffiliateClick = () => {
-    logClick(product.id, product.title, 'affiliate_click');
+    logInteraction(product.id, product.title, 'affiliate_click');
     window.open(product.affiliateLink, '_blank', 'noopener,noreferrer');
   };
 
@@ -133,4 +133,4 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
       </div>
     </motion.div>
   );
-}
+});

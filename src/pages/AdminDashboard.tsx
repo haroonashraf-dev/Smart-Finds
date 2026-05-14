@@ -30,10 +30,17 @@ type DashboardTab = 'analytics' | 'products' | 'categories' | 'settings';
 
 export function AdminDashboard() {
   const navigate = useNavigate();
-  const { clicks, getTopProducts } = useAnalyticsStore();
+  const { clicks, getTopProducts, subscribeToInteractions } = useAnalyticsStore();
   const { products, categories, addProduct, updateProduct, deleteProduct, addCategory, deleteCategory } = useProductStore();
   const [isAuth, setIsAuth] = useState(false);
   const [activeTab, setActiveTab] = useState<DashboardTab>('analytics');
+
+  useEffect(() => {
+    if (activeTab === 'analytics' && isAuth) {
+      const unsubscribe = subscribeToInteractions(30);
+      return () => unsubscribe();
+    }
+  }, [activeTab, isAuth, subscribeToInteractions]);
 
   // Form states
   const [newProduct, setNewProduct] = useState<Partial<Product>>({

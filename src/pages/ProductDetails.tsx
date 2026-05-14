@@ -13,7 +13,8 @@ import {
   CheckCircle2, 
   Users,
   Timer,
-  Share2
+  Share2,
+  ArrowRight
 } from 'lucide-react';
 import { useProductStore } from '../store/productStore';
 import { useAnalyticsStore } from '../store/analyticsStore';
@@ -38,7 +39,7 @@ const DUMMY_REVIEWS = [
 export function ProductDetails() {
   const { slug } = useParams<{ slug: string }>();
   const { products } = useProductStore();
-  const { logClick } = useAnalyticsStore();
+  const { logInteraction } = useAnalyticsStore();
   const { addRecentlyViewed } = useUserStore();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -49,12 +50,12 @@ export function ProductDetails() {
 
   useEffect(() => {
     if (product) {
-      logClick(product.id, product.title, 'view');
+      logInteraction(product.id, product.title, 'view');
       addRecentlyViewed(product.id);
       setSelectedImage(product.image);
       window.scrollTo(0, 0);
     }
-  }, [product, logClick, addRecentlyViewed]);
+  }, [product, logInteraction, addRecentlyViewed]);
 
   if (!product) {
     return (
@@ -66,7 +67,7 @@ export function ProductDetails() {
   }
 
   const handleAffiliateClick = () => {
-    logClick(product.id, product.title, 'affiliate_click');
+    logInteraction(product.id, product.title, 'affiliate_click');
     window.open(product.affiliateLink, '_blank', 'noopener,noreferrer');
   };
 
@@ -125,7 +126,7 @@ export function ProductDetails() {
                   selectedImage === product.image ? "border-primary shadow-xl scale-105" : "border-transparent opacity-60 hover:opacity-100"
                 )}
               >
-                <img src={product.image} alt="" className="w-full h-full object-cover rounded-[16px] sm:rounded-[24px]" />
+                <img src={product.image} alt="" className="w-full h-full object-cover rounded-[16px] sm:rounded-[24px]" loading="lazy" />
               </button>
               {product.gallery?.map((img, i) => (
                 <button 
@@ -136,7 +137,7 @@ export function ProductDetails() {
                     selectedImage === img ? "border-primary shadow-xl scale-105" : "border-transparent opacity-60 hover:opacity-100"
                   )}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover rounded-[16px] sm:rounded-[24px]" />
+                  <img src={img} alt="" className="w-full h-full object-cover rounded-[16px] sm:rounded-[24px]" loading="lazy" />
                 </button>
               ))}
             </div>

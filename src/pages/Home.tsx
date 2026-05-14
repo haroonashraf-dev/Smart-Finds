@@ -227,7 +227,7 @@ export function Home() {
             <div className="flex-1 grid grid-cols-2 gap-4">
               <div className="space-y-4">
                 <div className="h-64 rounded-3xl overflow-hidden grayscale hover:grayscale-0 transition-all duration-700">
-                  <img src="https://images.unsplash.com/photo-1558562805-4bf1e2a724eb?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Gadget Review" className="w-full h-full object-cover" />
+                  <img src="https://images.unsplash.com/photo-1558562805-4bf1e2a724eb?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Gadget Review" className="w-full h-full object-cover" loading="lazy" />
                 </div>
                 <div className="h-48 bg-primary rounded-3xl p-8 flex flex-col justify-end">
                   <p className="text-white font-black text-4xl">10k+</p>
@@ -240,7 +240,7 @@ export function Home() {
                   <p className="text-gray-500 dark:text-gray-400 text-[10px] font-black uppercase tracking-widest">Trust Rating</p>
                 </div>
                 <div className="h-64 rounded-3xl overflow-hidden grayscale hover:grayscale-0 transition-all duration-700">
-                  <img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Tech Lab" className="w-full h-full object-cover" />
+                  <img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Tech Lab" className="w-full h-full object-cover" loading="lazy" />
                 </div>
               </div>
             </div>
