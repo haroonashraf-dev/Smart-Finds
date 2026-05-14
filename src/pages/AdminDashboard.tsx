@@ -432,9 +432,8 @@ export function AdminDashboard() {
                   <h2 className="text-xl font-black mb-6 uppercase tracking-tighter dark:text-white">Traffic Overview</h2>
                   <div className="h-[320px] w-full min-w-0 relative">
                     {chartData.length > 0 ? (
-                      <div className="w-full h-full">
-                        <ResponsiveContainer width="99%" height="100%">
-                          <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.1} />
                             <XAxis 
                               dataKey="name" 
@@ -463,7 +462,6 @@ export function AdminDashboard() {
                             <Line type="monotone" dataKey="clicks" stroke="#3b82f6" strokeWidth={4} dot={{ r: 4, strokeWidth: 4, fill: '#fff' }} />
                           </LineChart>
                         </ResponsiveContainer>
-                      </div>
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-gray-500 font-bold uppercase tracking-widest text-[10px]">
                         No activity data available
