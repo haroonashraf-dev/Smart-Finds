@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { MOCK_PRODUCTS, Product, CATEGORIES } from '../data/mockProducts';
-import { auth, db, isFirebaseConfigured } from '../lib/firebase';
+import { auth, db, isFirebaseConfigured, handleFirestoreError, OperationType } from '../lib/firebase';
 import { 
   collection, 
   onSnapshot,
@@ -13,53 +13,6 @@ import {
   query,
   where
 } from 'firebase/firestore';
-
-enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
-}
-
-interface FirestoreErrorInfo {
-  error: string;
-  operationType: OperationType;
-  path: string | null;
-  authInfo: {
-    userId?: string | null;
-    email?: string | null;
-    emailVerified?: boolean | null;
-    isAnonymous?: boolean | null;
-    providerInfo?: {
-      providerId: string;
-      email: string | null;
-    }[];
-  }
-}
-
-function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    operationType,
-    path,
-    authInfo: {
-      userId: auth?.currentUser?.uid || null,
-      email: auth?.currentUser?.email || null,
-      emailVerified: auth?.currentUser?.emailVerified || null,
-      isAnonymous: auth?.currentUser?.isAnonymous || null,
-      providerInfo: auth?.currentUser?.providerData?.map(p => ({
-        providerId: p.providerId,
-        email: p.email
-      })) || []
-    }
-  };
-  console.error('Firestore Error Details: ', JSON.stringify(errInfo));
-  if (errInfo.error.includes('permission-denied') || errInfo.error.includes('Missing or insufficient permissions')) {
-    console.error('❌ SEVERE: Permission Denied. Verify your Firestore Security Rules.');
-  }
-}
 
 interface ProductState {
   products: Product[];

@@ -101,6 +101,7 @@ export function Home() {
                 src="https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" 
                 alt="Choice Smart Find" 
                 className="w-full h-full object-cover rounded-[60px] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.5)] transition-transform duration-[2000ms] group-hover:scale-110"
+                fetchPriority="high"
               />
 
               <div className="absolute inset-0 rounded-[60px] border-[1px] border-white/20 z-20 pointer-events-none" />

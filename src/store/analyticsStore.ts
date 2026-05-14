@@ -11,7 +11,7 @@ import {
   Timestamp,
   onSnapshot
 } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 
 export interface ClickData {
   productId: string;
@@ -37,14 +37,18 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => {
     logInteraction: async (productId, productName, type) => {
       try {
         if (!db) return;
+        
+        // Add a small delay to avoid race conditions with auth if needed
+        // but serverTimestamp() already handles most stuff
         await addDoc(collection(db, 'interactions'), {
           productId,
           productName,
           type,
           timestamp: serverTimestamp()
         });
+        console.log(`✅ Interaction logged: ${type} for ${productName}`);
       } catch (err) {
-        console.error('Failed to log interaction:', err);
+        handleFirestoreError(err, OperationType.WRITE, 'interactions');
       }
     },
 
@@ -53,7 +57,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => {
       set({ loading: true });
       try {
         const msInDay = 24 * 60 * 60 * 1000;
-        const cutoffDate = new Date(Date.now() - days * msInDay);
+        const cutoffDate = Timestamp.fromDate(new Date(Date.now() - days * msInDay));
         
         const q = query(
           collection(db, 'interactions'),
@@ -74,7 +78,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => {
         
         set({ clicks, loading: false });
       } catch (err) {
-        console.error('Failed to fetch interactions:', err);
+        handleFirestoreError(err, OperationType.LIST, 'interactions');
         set({ loading: false });
       }
     },
@@ -84,7 +88,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => {
       set({ loading: true });
       
       const msInDay = 24 * 60 * 60 * 1000;
-      const cutoffDate = new Date(Date.now() - days * msInDay);
+      const cutoffDate = Timestamp.fromDate(new Date(Date.now() - days * msInDay));
       
       const q = query(
         collection(db, 'interactions'),
@@ -104,7 +108,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => {
         }) as ClickData[];
         set({ clicks, loading: false });
       }, (err) => {
-        console.error('Interactions subscription error:', err);
+        handleFirestoreError(err, OperationType.GET, 'interactions-snapshot');
         set({ loading: false });
       });
     },
