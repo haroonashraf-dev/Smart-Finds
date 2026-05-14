@@ -62,6 +62,7 @@ export function AdminDashboard() {
   });
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [dbStatus, setDbStatus] = useState<'connected' | 'locked' | 'unauthorized'>('connected');
+  const [errorStatus, setErrorStatus] = useState<string | null>(null);
 
   useEffect(() => {
     // Check if we can actually read/write to the DB
@@ -73,10 +74,12 @@ export function AdminDashboard() {
       try {
         await getDoc(doc(db, 'settings', 'admin'));
         setDbStatus(auth.currentUser ? 'connected' : 'unauthorized');
+        setErrorStatus(null);
       } catch (err: any) {
         console.error('Initial DB Check failed:', err);
-        if (err.code === 'permission-denied') {
+        if (err.code === 'permission-denied' || err.message?.includes('permissions')) {
           setDbStatus('locked');
+          setErrorStatus('Permission Denied: Deployment of Firestore Rules is required.');
         } else {
           setDbStatus('unauthorized');
         }
@@ -385,6 +388,15 @@ export function AdminDashboard() {
         <main className="container mx-auto px-4 py-6 relative z-10">
           {activeTab === 'analytics' && (
             <>
+              {errorStatus && (
+                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-red-500 leading-relaxed">
+                    🚨 {errorStatus}
+                    <br />
+                    <span className="opacity-70">Ensure you have deployed the firestore.rules to your Firebase project.</span>
+                  </p>
+                </div>
+              )}
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-gray-100 dark:border-white/5 shadow-xl">

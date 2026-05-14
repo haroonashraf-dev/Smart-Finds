@@ -11,7 +11,8 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    // Simple admin check: if signed in (anonymously after password check in UI)
+    // Simple admin check: for now, any signed-in user is an admin for this app's dashboard
+    // In a real app, you'd check for a specific UID or a custom claim
     function isAdmin() {
       return isSignedIn();
     }
@@ -54,7 +55,7 @@ service cloud.firestore {
       return data.productId is string && data.productId.size() <= 128 &&
              data.productName is string && data.productName.size() <= 200 &&
              data.type in ['view', 'affiliate_click'] &&
-             data.timestamp == request.time;
+             data.timestamp is timestamp;
     }
 
     function isValidSettings(data) {
@@ -98,7 +99,7 @@ service cloud.firestore {
 
     match /interactions/{interactionId} {
       allow create: if isValidInteraction(incoming());
-      allow read: if isAdmin();
+      allow get, list: if isAdmin();
       allow update, delete: if false;
     }
   }
