@@ -43,7 +43,7 @@ export function Navbar() {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 h-16 md:h-24 flex items-center justify-between gap-10">
+        <div className="container mx-auto px-4 h-16 md:h-20 flex items-center justify-between gap-10">
           
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group shrink-0">
@@ -51,7 +51,7 @@ export function Navbar() {
               <ShoppingBag size={24} strokeWidth={2.5} />
             </div>
             <span className="font-black text-xl sm:text-3xl tracking-[-0.04em] text-zinc-950 dark:text-white uppercase font-display">
-              Smart<span className="text-primary italic">Living</span>
+              Smart Living <span className="text-primary italic">Finds</span>
             </span>
           </Link>
           

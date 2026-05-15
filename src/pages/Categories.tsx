@@ -72,15 +72,15 @@ export function Categories() {
           </button>
           {categories.map(category => (
             <button
-              key={category}
-              onClick={() => handleCategorySelect(category)}
+              key={category.name}
+              onClick={() => handleCategorySelect(category.name)}
               className={`shrink-0 px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all border ${
-                selectedCategory === category
+                selectedCategory === category.name
                   ? 'bg-zinc-900 dark:bg-white text-white dark:text-black border-transparent shadow-[0_10px_20px_rgba(0,0,0,0.2)] scale-105' 
                   : 'glass-card border-zinc-200/50 dark:border-white/10 text-zinc-500'
               }`}
             >
-              {category}
+              {category.name}
             </button>
           ))}
         </div>
@@ -150,16 +150,16 @@ export function Categories() {
                             </button>
                           </li>
                           {categories.map(category => (
-                            <li key={category}>
+                            <li key={category.name}>
                               <button
-                                onClick={() => handleCategorySelect(category)}
+                                onClick={() => handleCategorySelect(category.name)}
                                 className={`w-full text-left px-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${
-                                  selectedCategory === category
+                                  selectedCategory === category.name
                                     ? 'bg-zinc-900 text-white dark:bg-white dark:text-black shadow-xl ring-4 ring-zinc-500/10' 
                                     : 'hover:bg-zinc-900/5 dark:hover:bg-white/5 text-zinc-600 dark:text-zinc-400'
                                 }`}
                               >
-                                {category}
+                                {category.name}
                               </button>
                             </li>
                           ))}

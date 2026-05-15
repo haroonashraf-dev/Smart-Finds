@@ -24,7 +24,7 @@ import { auth, db } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { SEO } from '../components/seo/SEO';
-import { Product } from '../data/mockProducts';
+import { Product, Category } from '../data/mockProducts';
 
 type DashboardTab = 'analytics' | 'products' | 'categories' | 'settings';
 
@@ -47,7 +47,7 @@ export function AdminDashboard() {
   const [newProduct, setNewProduct] = useState<Partial<Product>>({
     title: '',
     description: '',
-    category: categories[0] || '',
+    category: categories[0]?.name || '',
     image: '',
     affiliateLink: '',
     features: [''],
@@ -55,9 +55,10 @@ export function AdminDashboard() {
     gallery: []
   });
   const [galleryInputs, setGalleryInputs] = useState<string[]>(['']);
-  const [newCategory, setNewCategory] = useState('');
-  const [editingCategory, setEditingCategory] = useState<string | null>(null);
+  const [newCategory, setNewCategory] = useState({ name: '', image: '' });
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editCategoryName, setEditCategoryName] = useState('');
+  const [editCategoryImage, setEditCategoryImage] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [changePasswordData, setChangePasswordData] = useState({
     newPassword: '',
@@ -241,7 +242,7 @@ export function AdminDashboard() {
       setNewProduct({
         title: '',
         description: '',
-        category: categories[0] || '',
+        category: categories[0]?.name || '',
         image: '',
         affiliateLink: '',
         features: [''],
@@ -285,21 +286,41 @@ export function AdminDashboard() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleCategoryImageUpload = async (e: ChangeEvent<HTMLInputElement>, isNew: boolean) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const base64 = await compressImage(file);
+        if (isNew) {
+          setNewCategory({ ...newCategory, image: base64 });
+        } else {
+          setEditCategoryImage(base64);
+        }
+      } catch (err) {
+        console.error("Error uploading category image:", err);
+        alert("Failed to process image.");
+      }
+    }
+  };
+
   const handleAddCategory = (e: FormEvent) => {
     e.preventDefault();
-    if (newCategory.trim()) {
-      addCategory(newCategory.trim());
-      setNewCategory('');
+    if (newCategory.name.trim()) {
+      addCategory(newCategory.name.trim(), newCategory.image);
+      setNewCategory({ name: '', image: '' });
       alert('Category added successfully!');
     }
   };
 
   const handleUpdateCategory = async (oldName: string) => {
-    if (editCategoryName.trim() && editCategoryName !== oldName) {
+    const hasChanges = (editCategoryName.trim() && editCategoryName !== oldName) || 
+                       (editCategoryImage !== editingCategory?.image);
+
+    if (hasChanges) {
       try {
-        await updateCategory(oldName, editCategoryName.trim());
+        await updateCategory(oldName, editCategoryName.trim(), editCategoryImage);
         setEditingCategory(null);
-        alert('Category renamed successfully and all products updated!');
+        alert('Category updated successfully!');
       } catch (err) {
         console.error("Failed to update category:", err);
         alert('Error updating category.');
@@ -309,23 +330,23 @@ export function AdminDashboard() {
     }
   };
 
-  const handleDeleteCategory = (category: string) => {
-    if (category === 'General') {
+  const handleDeleteCategory = (categoryName: string) => {
+    if (categoryName === 'General') {
       alert('The "General" category is the default fallback and cannot be deleted.');
       return;
     }
 
-    const productCount = products.filter(p => p.category === category).length;
+    const productCount = products.filter(p => p.category === categoryName).length;
     if (productCount > 0) {
       if (!confirm(`This category contains ${productCount} products. Deleting it will automatically move all these products to the "General" category. Continue?`)) {
         return;
       }
     } else {
-      if (!confirm(`Are you sure you want to delete the "${category}" category?`)) {
+      if (!confirm(`Are you sure you want to delete the "${categoryName}" category?`)) {
         return;
       }
     }
-    deleteCategory(category);
+    deleteCategory(categoryName);
   };
 
   const handleUpdatePassword = async (e: FormEvent) => {
@@ -397,7 +418,7 @@ export function AdminDashboard() {
               <Activity size={20} className="md:w-6 md:h-6" />
             </div>
             <div>
-              <h1 className="font-black text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] dark:text-white pb-0.5">Admin Console</h1>
+              <h1 className="font-black text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] dark:text-white pb-0.5">Smart Living Finds Console</h1>
               <div className="flex items-center gap-1.5">
                 <div className={`w-1.5 h-1.5 rounded-full ${dbStatus === 'connected' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
                 <span className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase leading-tight tracking-wider">
@@ -564,7 +585,7 @@ export function AdminDashboard() {
                       setNewProduct({
                         title: '',
                         description: '',
-                        category: categories[0] || '',
+                        category: categories[0]?.name || '',
                         image: '',
                         affiliateLink: '',
                         features: [''],
@@ -690,7 +711,7 @@ export function AdminDashboard() {
                           onChange={(e: ChangeEvent<HTMLSelectElement>) => setNewProduct({...newProduct, category: e.target.value})}
                           className="w-full bg-gray-50 dark:bg-zinc-800 p-4 rounded-xl border-none focus:ring-2 ring-primary dark:text-white font-bold"
                         >
-                          {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                          {categories.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
                         </select>
                       </div>
 
@@ -821,78 +842,144 @@ export function AdminDashboard() {
           )}
 
           {activeTab === 'categories' && (
-            <div className="space-y-8 max-w-2xl mx-auto">
+            <div className="space-y-8 max-w-4xl mx-auto">
               <h2 className="text-3xl font-black dark:text-white uppercase tracking-tighter text-center">Category Management</h2>
               
               <div className="bg-white dark:bg-zinc-900 p-8 rounded-3xl border border-gray-100 dark:border-white/5 shadow-xl">
-                <form onSubmit={handleAddCategory} className="flex gap-4">
-                  <input 
-                    type="text" required
-                    value={newCategory}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) => setNewCategory(e.target.value)}
-                    placeholder="New category name..."
-                    className="flex-1 bg-gray-50 dark:bg-zinc-800 p-5 rounded-2xl border-none focus:ring-2 ring-primary dark:text-white font-bold"
-                  />
-                  <button type="submit" className="bg-primary text-white px-8 rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-[0.98] transition-all">
-                    Add
+                <form onSubmit={handleAddCategory} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase text-gray-400 mb-2">Category Name</label>
+                      <input 
+                        type="text" required
+                        value={newCategory.name}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => setNewCategory({...newCategory, name: e.target.value})}
+                        placeholder="e.g. Smart Lighting"
+                        className="w-full bg-gray-50 dark:bg-zinc-800 p-4 rounded-xl border-none focus:ring-2 ring-primary dark:text-white font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase text-gray-400 mb-2">Background Image URL</label>
+                      <div className="flex gap-3">
+                         <input 
+                          type="url"
+                          value={newCategory.image}
+                          onChange={(e: ChangeEvent<HTMLInputElement>) => setNewCategory({...newCategory, image: e.target.value})}
+                          placeholder="https://images.unsplash.com/..."
+                          className="flex-1 bg-gray-50 dark:bg-zinc-800 p-4 rounded-xl border-none focus:ring-2 ring-primary dark:text-white font-bold text-xs"
+                        />
+                        <div className="relative">
+                          <input 
+                            type="file" 
+                            accept="image/*"
+                            onChange={(e) => handleCategoryImageUpload(e, true)}
+                            className="hidden"
+                            id="new-category-image"
+                          />
+                          <label 
+                            htmlFor="new-category-image"
+                            className="flex items-center justify-center p-4 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-xl cursor-pointer text-gray-500"
+                          >
+                            <Upload size={20} />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <button type="submit" className="w-full bg-primary text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-[0.98] transition-all">
+                    Create Category
                   </button>
                 </form>
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {categories.map(c => (
-                  <div key={c} className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-gray-100 dark:border-white/5 flex justify-between items-center group">
-                    {editingCategory === c ? (
-                      <div className="flex-1 flex gap-2 mr-4">
+                  <div key={c.name} className="bg-white dark:bg-zinc-900 p-4 rounded-3xl border border-gray-100 dark:border-white/5 shadow-xl flex flex-col group overflow-hidden">
+                    <div className="h-32 rounded-2xl bg-gray-100 dark:bg-zinc-800 mb-4 overflow-hidden relative">
+                      <img src={c.image || 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=500&q=60'} alt={c.name} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/20" />
+                    </div>
+
+                    {editingCategory?.name === c.name ? (
+                      <div className="space-y-4 px-2 pb-2">
                         <input 
                           type="text"
                           value={editCategoryName}
                           onChange={(e) => setEditCategoryName(e.target.value)}
-                          className="flex-1 bg-gray-50 dark:bg-zinc-800 p-2 rounded-xl border-none focus:ring-2 ring-primary dark:text-white font-bold text-xs"
+                          className="w-full bg-gray-50 dark:bg-zinc-800 p-3 rounded-xl border-none focus:ring-2 ring-primary dark:text-white font-bold text-sm"
                           autoFocus
                         />
-                        <button 
-                          onClick={() => handleUpdateCategory(c)}
-                          className="p-2 bg-emerald-500 text-white rounded-lg"
-                        >
-                          <Check size={14} />
-                        </button>
-                        <button 
-                          onClick={() => setEditingCategory(null)}
-                          className="p-2 bg-gray-500 text-white rounded-lg"
-                        >
-                          <X size={14} />
-                        </button>
+                        <div className="flex gap-2">
+                          <input 
+                            type="url"
+                            value={editCategoryImage}
+                            onChange={(e) => setEditCategoryImage(e.target.value)}
+                            placeholder="Image URL"
+                            className="flex-1 bg-gray-50 dark:bg-zinc-800 p-2 rounded-xl border-none focus:ring-2 ring-primary dark:text-white font-bold text-[10px]"
+                          />
+                           <div className="relative">
+                            <input 
+                              type="file" 
+                              accept="image/*"
+                              onChange={(e) => handleCategoryImageUpload(e, false)}
+                              className="hidden"
+                              id={`edit-cat-img-${c.name}`}
+                            />
+                            <label 
+                              htmlFor={`edit-cat-img-${c.name}`}
+                              className="flex items-center justify-center p-2 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-lg cursor-pointer text-gray-500"
+                            >
+                              <Upload size={14} />
+                            </label>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => handleUpdateCategory(c.name)}
+                            className="flex-1 bg-emerald-500 text-white py-2 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2"
+                          >
+                            <Check size={14} /> Save
+                          </button>
+                          <button 
+                            onClick={() => setEditingCategory(null)}
+                            className="flex-1 bg-gray-500 text-white py-2 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2"
+                          >
+                            <X size={14} /> Cancel
+                          </button>
+                        </div>
                       </div>
                     ) : (
-                      <span className="font-black text-xs uppercase tracking-widest dark:text-white">{c}</span>
-                    )}
-                    
-                    <div className="flex items-center gap-4">
-                      <span className="bg-gray-100 dark:bg-zinc-800 px-3 py-1 rounded-lg text-[10px] font-black text-gray-500">
-                        {products.filter(p => p.category === c).length} Products
-                      </span>
-                      <div className="flex gap-1">
-                        <button 
-                          onClick={() => {
-                            setEditingCategory(c);
-                            setEditCategoryName(c);
-                          }}
-                          className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
-                          title="Rename Category"
-                        >
-                          <Edit3 size={16} />
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteCategory(c)}
-                          className={`p-2 transition-colors ${c === 'General' ? 'opacity-20 cursor-not-allowed text-gray-300' : 'text-gray-400 hover:text-red-500'}`}
-                          title={c === 'General' ? 'Default category cannot be deleted' : 'Delete Category'}
-                          disabled={c === 'General'}
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                      <div className="flex justify-between items-center px-2 pb-2">
+                        <div>
+                          <h3 className="font-black text-sm uppercase tracking-widest dark:text-white">{c.name}</h3>
+                          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                            {products.filter(p => p.category === c.name).length} Products
+                          </p>
+                        </div>
+                        
+                        <div className="flex gap-1">
+                          <button 
+                            onClick={() => {
+                              setEditingCategory(c);
+                              setEditCategoryName(c.name);
+                              setEditCategoryImage(c.image || '');
+                            }}
+                            className="p-3 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 rounded-xl transition-all"
+                            title="Edit Category"
+                          >
+                            <Edit3 size={18} />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteCategory(c.name)}
+                            className={`p-3 transition-all rounded-xl ${c.name === 'General' ? 'opacity-20 cursor-not-allowed text-gray-300' : 'text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10'}`}
+                            title={c.name === 'General' ? 'Default category cannot be deleted' : 'Delete Category'}
+                            disabled={c.name === 'General'}
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 ))}
               </div>

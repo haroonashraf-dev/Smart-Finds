@@ -8,7 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 // Generate WhatsApp deep link
 export function getWhatsAppLink(productName: string, productUrl: string) {
   const phone = "923117968617"; 
-  const text = `Hello SmartFinds! I am interested in the *${productName}*. Could you please provide more details?
+  const text = `Hello Smart Living Finds! I am interested in the *${productName}*. Could you please provide more details?
 
 Product Link: ${productUrl}
 

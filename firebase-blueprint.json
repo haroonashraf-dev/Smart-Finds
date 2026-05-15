@@ -24,10 +24,11 @@
     },
     "Category": {
       "title": "Category",
-      "description": "A product category for organization.",
+      "description": "A product category for organization with a visual background.",
       "type": "object",
       "properties": {
-        "name": { "type": "string" }
+        "name": { "type": "string" },
+        "image": { "type": "string" }
       },
       "required": ["name"]
     }

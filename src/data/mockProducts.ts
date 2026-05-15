@@ -15,14 +15,19 @@ export interface Product {
   trending: boolean;
 }
 
-export const CATEGORIES = [
-  "Smart Gadgets",
-  "Home Essentials",
-  "Kitchen Tools",
-  "Car Accessories",
-  "Mobile Accessories",
-  "Fitness Products",
-  "Tech Finds",
+export interface Category {
+  name: string;
+  image?: string;
+}
+
+export const CATEGORIES: Category[] = [
+  { name: "Smart Gadgets", image: "https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=800&q=80" },
+  { name: "Home Essentials", image: "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&w=800&q=80" },
+  { name: "Kitchen Tools", image: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=800&q=80" },
+  { name: "Car Accessories", image: "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=800&q=80" },
+  { name: "Mobile Accessories", image: "https://images.unsplash.com/photo-1523206489230-c012c64b2b48?auto=format&fit=crop&w=800&q=80" },
+  { name: "Fitness Products", image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=80" },
+  { name: "Tech Finds", image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80" },
 ];
 
 export const MOCK_PRODUCTS: Product[] = [

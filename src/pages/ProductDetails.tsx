@@ -32,7 +32,7 @@ const BENEFITS = [
 
 const DUMMY_REVIEWS = [
   { name: "John D.", rating: 5, date: "2 days ago", comment: "Absolutely love this gadget! Exactly as described and works perfectly." },
-  { name: "Sarah M.", rating: 5, date: "1 week ago", comment: "Fast shipping and very high quality. Definitely recommend SmartFinds!" },
+  { name: "Sarah M.", rating: 5, date: "1 week ago", comment: "Fast shipping and very high quality. Definitely recommend Smart Living Finds!" },
   { name: "Alex P.", rating: 4, date: "2 weeks ago", comment: "Great value for the price. The build quality is impressive." },
 ];
 
@@ -83,7 +83,7 @@ export function ProductDetails() {
         keywords={`${product.title}, AliExpress gadgets, ${product.category}, tech review`}
       />
 
-      <div className="container relative z-10 mx-auto px-4 py-8 pb-32 md:pb-20">
+      <div className="container relative z-10 mx-auto px-4 py-6 pb-24 md:pb-16">
         {/* Atmospheric Background Effects */}
         <div className="atmospheric-blur opacity-40 dark:opacity-20 pointer-events-none" />
 
@@ -301,7 +301,7 @@ export function ProductDetails() {
         </div>
 
         {/* Reviews Section */}
-        <div className="pt-20 border-t border-zinc-200 dark:border-white/5 mb-20">
+        <div className="pt-16 border-t border-zinc-200 dark:border-white/5 mb-16">
           <div className="max-w-4xl mx-auto">
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
                 <div>
@@ -345,7 +345,7 @@ export function ProductDetails() {
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (
-          <div className="pt-20 border-t border-zinc-200 dark:border-white/5">
+          <div className="pt-16 border-t border-zinc-200 dark:border-white/5">
             <div className="flex items-center justify-between mb-16">
                <h2 className="text-4xl md:text-6xl font-black dark:text-white uppercase tracking-tighter font-display">SIMILAR FINDS</h2>
                <Link to="/categories" className="text-[10px] font-black uppercase tracking-[0.3em] text-primary hover:text-zinc-900 dark:hover:text-white transition-colors flex items-center gap-4">

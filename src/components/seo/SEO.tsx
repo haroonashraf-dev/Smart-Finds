@@ -17,7 +17,7 @@ export function SEO({
   type = "website",
   keywords = "smart home tech, tech deals, curated tech, best gadget finds, Pinterest gadgets"
 }: SEOProps) {
-  const siteName = "SmartFinds";
+  const siteName = "Smart Living Finds";
   const fullTitle = `${title} | ${siteName}`;
 
   return (

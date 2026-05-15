@@ -9,7 +9,7 @@ export function About() {
       <SEO 
         title="About Us"
         description="Learn more about Smart Living Finds, our mission, and our curated approach to modern essentials."
-        keywords="about SmartFinds, curated gadgets mission, affiliate disclosure, smart living team"
+        keywords="about Smart Living Finds, curated gadgets mission, affiliate disclosure, smart living finds team"
       />
       <div className="container mx-auto px-4 py-12 md:py-16 max-w-5xl">
         <motion.div
@@ -22,7 +22,7 @@ export function About() {
             Empowering Your <br/> Smart Shopping
           </h1>
           <p className="text-lg md:text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto font-medium leading-relaxed">
-            SmartFinds is more than a directory. We are a professional curation hub dedicated to sourcing high-performance tech and modern essentials from global marketplaces.
+            Smart Living Finds is more than a directory. We are a professional curation hub dedicated to sourcing high-performance tech and modern essentials from global marketplaces.
           </p>
         </motion.div>
 
@@ -54,7 +54,7 @@ export function About() {
             <div>
               <h2 className="text-3xl font-black mb-6 tracking-tighter dark:text-white uppercase italic">Operations & Logistics</h2>
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-6 font-medium">
-                SmartFinds operates as a specialized affiliate gateway. We do not store inventory or manage post-purchase logistics directly. This model allows our team to focus 100% of their energy on market research and quality assurance.
+                Smart Living Finds operates as a specialized affiliate gateway. We do not store inventory or manage post-purchase logistics directly. This model allows our team to focus 100% of their energy on market research and quality assurance.
               </p>
               <div className="flex flex-col gap-4">
                 <div className="flex gap-4 p-5 bg-gray-50 dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-white/5">
@@ -77,7 +77,7 @@ export function About() {
             <div>
               <h2 className="text-3xl font-black mb-6 tracking-tighter dark:text-white uppercase italic">Affiliate Transparency</h2>
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed font-medium">
-                To maintain our independence and provide this service free of charge to our users, SmartFinds participates in affiliate marketing programs. We may earn a commission on qualifying purchases made through our referral links—at zero extra cost to you.
+                To maintain our independence and provide this service free of charge to our users, Smart Living Finds participates in affiliate marketing programs. We may earn a commission on qualifying purchases made through our referral links—at zero extra cost to you.
               </p>
             </div>
           </div>

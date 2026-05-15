@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { MOCK_PRODUCTS, Product, CATEGORIES } from '../data/mockProducts';
+import { MOCK_PRODUCTS, Product, CATEGORIES, Category } from '../data/mockProducts';
 import { auth, db, isFirebaseConfigured, handleFirestoreError, OperationType } from '../lib/firebase';
 import { 
   collection, 
@@ -16,7 +16,7 @@ import {
 
 interface ProductState {
   products: Product[];
-  categories: string[];
+  categories: Category[];
   searchQuery: string;
   selectedCategory: string | null;
   isLoading: boolean;
@@ -25,9 +25,9 @@ interface ProductState {
   addProduct: (product: Product) => Promise<void>;
   updateProduct: (id: string, product: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
-  addCategory: (category: string) => Promise<void>;
+  addCategory: (category: string, image?: string) => Promise<void>;
   deleteCategory: (category: string) => Promise<void>;
-  updateCategory: (oldName: string, newName: string) => Promise<void>;
+  updateCategory: (oldName: string, newName: string, newImage?: string) => Promise<void>;
   initialize: () => Promise<void>;
   filteredProducts: () => Product[];
 }
@@ -84,13 +84,21 @@ export const useProductStore = create<ProductState>()((set, get) => ({
 
         // Listen to Categories
         const catUnsubscribe = onSnapshot(collection(db!, 'categories'), (snapshot) => {
-          const fetchedCats = snapshot.docs.map(doc => doc.data().name as string).filter(Boolean);
+          const fetchedCats = snapshot.docs.map(doc => ({
+            name: doc.data().name as string,
+            image: doc.data().image as string
+          })).filter(cat => cat.name);
+          
           if (fetchedCats.length > 0) {
-            set({ categories: Array.from(new Set(fetchedCats)) });
+            // Deduplicate by name to prevent duplicates in UI
+            const uniqueCats = Array.from(new Map(fetchedCats.map(c => [c.name, c])).values());
+            set({ categories: uniqueCats });
           } else {
-           // Infer from products if categories collection is empty
-           const inferred = Array.from(new Set(get().products.map(p => p.category)));
-           if (inferred.length > 0) set({ categories: inferred });
+            // Infer from products if categories collection is empty
+            const inferredNames = Array.from(new Set(get().products.map(p => p.category)));
+            if (inferredNames.length > 0) {
+              set({ categories: inferredNames.map(name => ({ name })) });
+            }
           }
         });
 
@@ -176,14 +184,15 @@ export const useProductStore = create<ProductState>()((set, get) => ({
     }
   },
 
-  addCategory: async (category) => {
-    if (get().categories.includes(category)) return;
-    const newCategories = [...get().categories, category];
+  addCategory: async (category, image) => {
+    if (get().categories.some(c => c.name === category)) return;
+    const newCategory: Category = { name: category, image };
+    const newCategories = [...get().categories, newCategory];
     set({ categories: newCategories });
 
     if (isFirebaseConfigured && db) {
       try {
-        await addDoc(collection(db!, 'categories'), { name: category });
+        await addDoc(collection(db!, 'categories'), { name: category, image: image || '' });
       } catch (error) {
         handleFirestoreError(error, OperationType.CREATE, 'categories');
       }
@@ -200,11 +209,11 @@ export const useProductStore = create<ProductState>()((set, get) => ({
     if (category === 'General') return; // Cannot delete the default category
 
     const products = get().products;
-    const newCategories = get().categories.filter(c => c !== category);
+    const newCategories = get().categories.filter(c => c.name !== category);
     
     // Ensure 'General' category exists
-    if (!newCategories.includes('General')) {
-      newCategories.push('General');
+    if (!newCategories.some(c => c.name === 'General')) {
+      newCategories.push({ name: 'General' });
     }
 
     const updatedProducts = products.map(p => 
@@ -245,11 +254,20 @@ export const useProductStore = create<ProductState>()((set, get) => ({
     }
   },
 
-  updateCategory: async (oldName, newName) => {
-    if (newName === oldName || !newName.trim()) return;
+  updateCategory: async (oldName, newName, newImage) => {
+    const isNameChanging = newName !== oldName && newName.trim();
+    if (!isNameChanging && newImage === undefined) return;
     
-    const newCategories = get().categories.map(c => c === oldName ? newName : c);
-    const updatedProducts = get().products.map(p => p.category === oldName ? { ...p, category: newName } : p);
+    const newCategories = get().categories.map(c => 
+      c.name === oldName 
+        ? { name: newName || oldName, image: newImage !== undefined ? newImage : c.image } 
+        : c
+    );
+    
+    let updatedProducts = get().products;
+    if (isNameChanging) {
+      updatedProducts = get().products.map(p => p.category === oldName ? { ...p, category: newName } : p);
+    }
     
     set({ categories: newCategories, products: updatedProducts });
 
@@ -258,12 +276,19 @@ export const useProductStore = create<ProductState>()((set, get) => ({
         // 1. Update in categories collection
         const q = query(collection(db!, 'categories'), where('name', '==', oldName));
         const snap = await getDocs(q);
-        const updateCatPromises = snap.docs.map(d => updateDoc(doc(db!, 'categories', d.id), { name: newName }));
+        const updateFields: any = {};
+        if (isNameChanging) updateFields.name = newName;
+        if (newImage !== undefined) updateFields.image = newImage;
+
+        const updateCatPromises = snap.docs.map(d => updateDoc(doc(db!, 'categories', d.id), updateFields));
         
-        // 2. Update products in this category in Firestore (Batch or individual updates)
-        const prodQ = query(collection(db!, 'products'), where('category', '==', oldName));
-        const prodSnap = await getDocs(prodQ);
-        const updateProdPromises = prodSnap.docs.map(d => updateDoc(doc(db!, 'products', d.id), { category: newName }));
+        // 2. Update products in this category in Firestore if name changed
+        let updateProdPromises: Promise<any>[] = [];
+        if (isNameChanging) {
+          const prodQ = query(collection(db!, 'products'), where('category', '==', oldName));
+          const prodSnap = await getDocs(prodQ);
+          updateProdPromises = prodSnap.docs.map(d => updateDoc(doc(db!, 'products', d.id), { category: newName }));
+        }
         
         await Promise.all([...updateCatPromises, ...updateProdPromises]);
       } catch (error) {

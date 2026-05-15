@@ -12,7 +12,7 @@ export function Footer() {
                 <ShoppingBag size={20} strokeWidth={2.5} />
               </div>
               <span className="font-black text-2xl tracking-[-0.04em] text-zinc-950 dark:text-white uppercase font-display">
-                Smart<span className="text-primary italic">Living</span>
+                Smart Living <span className="text-primary italic">Finds</span>
               </span>
             </Link>
             <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-10 leading-relaxed font-medium">
@@ -50,7 +50,7 @@ export function Footer() {
           <div className="md:col-span-4 bg-zinc-950 dark:bg-zinc-900 rounded-[32px] p-8 text-white">
             <h3 className="font-black text-[10px] uppercase tracking-[0.5em] text-zinc-500 mb-6">Transparency</h3>
             <p className="text-xs text-zinc-400 leading-relaxed font-medium mb-6">
-              SmartLiving is a professional curation site. We may receive commissions when you purchase via our links. This allows us to keep finding the best products at no cost to you.
+              Smart Living Finds is a professional curation site. We may receive commissions when you purchase via our links. This allows us to keep finding the best products at no cost to you.
             </p>
             <div className="h-px bg-white/10 mb-6" />
             <div className="flex items-center gap-4">
@@ -63,7 +63,7 @@ export function Footer() {
         </div>
         
         <div className="pt-10 border-t border-zinc-200 dark:border-white/10 flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] font-black uppercase tracking-[0.5em] text-zinc-400">
-          <p>&copy; {new Date().getFullYear()} SmartLiving Collection. All Rights Reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Smart Living Finds. All Rights Reserved.</p>
           <div className="flex gap-8">
             <span className="text-[9px]">v2.4.0-Premium</span>
             <span className="text-primary italic">Live Better</span>
