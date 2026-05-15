@@ -98,9 +98,9 @@ export const useProductStore = create<ProductState>()((set, get) => ({
             const rawName = data.name;
             const nameString = typeof rawName === 'string'
               ? rawName
-              : (rawName && typeof rawName === 'object' && rawName.name)
-                ? String(rawName.name)
-                : '';
+              : (rawName && typeof rawName === 'object' && !Array.isArray(rawName))
+                ? String((rawName as any).name || 'Category')
+                : 'Category';
 
             return {
               name: nameString,
@@ -114,7 +114,7 @@ export const useProductStore = create<ProductState>()((set, get) => ({
             set({ categories: uniqueCats });
           } else {
             // Infer from products if categories collection is empty
-            const inferredNames = Array.from(new Set(get().products.map(p => p.category)));
+            const inferredNames = Array.from(new Set(get().products.map(p => String(p.category))));
             if (inferredNames.length > 0) {
               set({ categories: inferredNames.map(name => ({ name })) });
             }

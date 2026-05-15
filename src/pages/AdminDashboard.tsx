@@ -558,7 +558,7 @@ export function AdminDashboard() {
                     {topProducts.length > 0 ? topProducts.map((p: { name: string; views: number; clicks: number }, i: number) => (
                       <div key={i} className="flex justify-between items-center">
                         <div className="max-w-[70%] subpixel-antialiased">
-                          <p className="font-black text-xs uppercase tracking-widest dark:text-white truncate">{p.name}</p>
+                          <p className="font-black text-xs uppercase tracking-widest dark:text-white truncate">{String(p.name)}</p>
                           <p className="text-[10px] text-gray-500 font-bold uppercase">{p.views} impressions</p>
                         </div>
                         <div className="text-right">
@@ -711,7 +711,7 @@ export function AdminDashboard() {
                           onChange={(e: ChangeEvent<HTMLSelectElement>) => setNewProduct({...newProduct, category: e.target.value})}
                           className="w-full bg-gray-50 dark:bg-zinc-800 p-4 rounded-xl border-none focus:ring-2 ring-primary dark:text-white font-bold"
                         >
-                          {categories.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                          {categories.map(c => <option key={String(c.name)} value={String(c.name)}>{String(c.name)}</option>)}
                         </select>
                       </div>
 
@@ -818,8 +818,8 @@ export function AdminDashboard() {
                       </div>
                     </div>
                     <div className="px-2 pb-2">
-                      <p className="text-[10px] text-primary font-black uppercase tracking-widest mb-1">{p.category}</p>
-                      <h3 className="font-black text-xs uppercase tracking-widest dark:text-white truncate mb-2">{p.title}</h3>
+                      <p className="text-[10px] text-primary font-black uppercase tracking-widest mb-1">{String(p.category)}</p>
+                      <h3 className="font-black text-xs uppercase tracking-widest dark:text-white truncate mb-2">{String(p.title)}</h3>
                       <div className="flex justify-between items-center">
                         <p className="font-black text-primary text-sm">${p.price}</p>
                         <button 
@@ -894,9 +894,9 @@ export function AdminDashboard() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {categories.map(c => (
-                  <div key={c.name} className="bg-white dark:bg-zinc-900 p-4 rounded-3xl border border-gray-100 dark:border-white/5 shadow-xl flex flex-col group overflow-hidden">
+                  <div key={String(c.name)} className="bg-white dark:bg-zinc-900 p-4 rounded-3xl border border-gray-100 dark:border-white/5 shadow-xl flex flex-col group overflow-hidden">
                     <div className="h-32 rounded-2xl bg-gray-100 dark:bg-zinc-800 mb-4 overflow-hidden relative">
-                      <img src={c.image || 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=500&q=60'} alt={c.name} className="w-full h-full object-cover" />
+                      <img src={c.image || 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=500&q=60'} alt={String(c.name)} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/20" />
                     </div>
 
@@ -923,10 +923,10 @@ export function AdminDashboard() {
                               accept="image/*"
                               onChange={(e) => handleCategoryImageUpload(e, false)}
                               className="hidden"
-                              id={`edit-cat-img-${c.name}`}
+                              id={`edit-cat-img-${String(c.name)}`}
                             />
                             <label 
-                              htmlFor={`edit-cat-img-${c.name}`}
+                              htmlFor={`edit-cat-img-${String(c.name)}`}
                               className="flex items-center justify-center p-2 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-lg cursor-pointer text-gray-500"
                             >
                               <Upload size={14} />
@@ -935,7 +935,7 @@ export function AdminDashboard() {
                         </div>
                         <div className="flex gap-2">
                           <button 
-                            onClick={() => handleUpdateCategory(c.name)}
+                            onClick={() => handleUpdateCategory(String(c.name))}
                             className="flex-1 bg-emerald-500 text-white py-2 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2"
                           >
                             <Check size={14} /> Save
@@ -951,9 +951,9 @@ export function AdminDashboard() {
                     ) : (
                       <div className="flex justify-between items-center px-2 pb-2">
                         <div>
-                          <h3 className="font-black text-sm uppercase tracking-widest dark:text-white">{c.name}</h3>
+                          <h3 className="font-black text-sm uppercase tracking-widest dark:text-white">{String(c.name)}</h3>
                           <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                            {products.filter(p => p.category === c.name).length} Products
+                            {products.filter(p => String(p.category) === String(c.name)).length} Products
                           </p>
                         </div>
                         
@@ -961,7 +961,7 @@ export function AdminDashboard() {
                           <button 
                             onClick={() => {
                               setEditingCategory(c);
-                              setEditCategoryName(c.name);
+                              setEditCategoryName(String(c.name));
                               setEditCategoryImage(c.image || '');
                             }}
                             className="p-3 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 rounded-xl transition-all"
@@ -970,10 +970,10 @@ export function AdminDashboard() {
                             <Edit3 size={18} />
                           </button>
                           <button 
-                            onClick={() => handleDeleteCategory(c.name)}
-                            className={`p-3 transition-all rounded-xl ${c.name === 'General' ? 'opacity-20 cursor-not-allowed text-gray-300' : 'text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10'}`}
-                            title={c.name === 'General' ? 'Default category cannot be deleted' : 'Delete Category'}
-                            disabled={c.name === 'General'}
+                            onClick={() => handleDeleteCategory(String(c.name))}
+                            className={`p-3 transition-all rounded-xl ${String(c.name) === 'General' ? 'opacity-20 cursor-not-allowed text-gray-300' : 'text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10'}`}
+                            title={String(c.name) === 'General' ? 'Default category cannot be deleted' : 'Delete Category'}
+                            disabled={String(c.name) === 'General'}
                           >
                             <Trash2 size={18} />
                           </button>

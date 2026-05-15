@@ -16,7 +16,7 @@ export const ProductCard = memo(({ product, index = 0 }: ProductCardProps) => {
   const logInteraction = useAnalyticsStore((state) => state.logInteraction);
 
   const handleAffiliateClick = () => {
-    logInteraction(product.id, product.title, 'affiliate_click');
+    logInteraction(product.id, String(product.title), 'affiliate_click');
     window.open(product.affiliateLink, '_blank', 'noopener,noreferrer');
   };
 
@@ -63,7 +63,7 @@ export const ProductCard = memo(({ product, index = 0 }: ProductCardProps) => {
 
         <img 
           src={product.image} 
-          alt={product.title} 
+          alt={String(product.title)} 
           className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-1000 ease-out" 
           loading="lazy"
         />
@@ -86,9 +86,9 @@ export const ProductCard = memo(({ product, index = 0 }: ProductCardProps) => {
         
         <Link to={`/product/${product.slug}`} className="group-hover:text-primary transition-colors">
           <h3 className="font-bold text-lg leading-[1.2] mb-3 text-zinc-900 dark:text-white h-11 line-clamp-2 uppercase tracking-tight font-display">
-            {product.title}
+            {String(product.title)}
           </h3>
-        </Link>
+                </Link>
         
         <div className="mt-auto pt-4">
           <div className="flex items-baseline gap-2 mb-4">
@@ -117,7 +117,7 @@ export const ProductCard = memo(({ product, index = 0 }: ProductCardProps) => {
                 <Zap size={14} className="fill-current" />
               </button>
               <a 
-                href={getWhatsAppLink(product.title, window.location.origin + '/product/' + product.slug)}
+                href={getWhatsAppLink(String(product.title), window.location.origin + '/product/' + product.slug)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-14 h-14 flex items-center justify-center glass-card text-zinc-600 dark:text-zinc-400 rounded-2xl hover:bg-emerald-500 hover:text-white hover:border-emerald-500 transition-all shrink-0 active:scale-95"

@@ -50,7 +50,7 @@ export function ProductDetails() {
 
   useEffect(() => {
     if (product) {
-      logInteraction(product.id, product.title, 'view');
+      logInteraction(product.id, String(product.title), 'view');
       addRecentlyViewed(product.id);
       setSelectedImage(product.image);
       window.scrollTo(0, 0);
@@ -67,7 +67,7 @@ export function ProductDetails() {
   }
 
   const handleAffiliateClick = () => {
-    logInteraction(product.id, product.title, 'affiliate_click');
+    logInteraction(product.id, String(product.title), 'affiliate_click');
     window.open(product.affiliateLink, '_blank', 'noopener,noreferrer');
   };
 
@@ -76,11 +76,11 @@ export function ProductDetails() {
   return (
     <>
       <SEO 
-        title={product.title}
-        description={product.description}
+        title={String(product.title)}
+        description={String(product.description)}
         image={product.image}
         type="product"
-        keywords={`${product.title}, AliExpress gadgets, ${product.category}, tech review`}
+        keywords={`${String(product.title)}, AliExpress gadgets, ${String(product.category)}, tech review`}
       />
 
       <div className="container relative z-10 mx-auto px-4 py-6 pb-24 md:pb-16">
@@ -91,9 +91,9 @@ export function ProductDetails() {
         <nav className="flex items-center gap-3 text-[10px] uppercase tracking-[0.2em] text-zinc-400 mb-10 font-black">
           <Link to="/" className="hover:text-primary transition-colors">Living</Link>
           <ChevronRight size={12} className="opacity-40" />
-          <Link to={`/categories?category=${encodeURIComponent(product.category)}`} className="hover:text-primary transition-colors">{product.category}</Link>
+          <Link to={`/categories?category=${encodeURIComponent(String(product.category))}`} className="hover:text-primary transition-colors">{String(product.category)}</Link>
           <ChevronRight size={12} className="opacity-40" />
-          <span className="text-zinc-900 dark:text-white truncate max-w-[200px]">{product.title}</span>
+          <span className="text-zinc-900 dark:text-white truncate max-w-[200px]">{String(product.title)}</span>
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 xl:gap-20 mb-16">
@@ -105,7 +105,7 @@ export function ProductDetails() {
               onClick={handleAffiliateClick}
               className="aspect-square bg-zinc-100 dark:bg-zinc-900/50 rounded-[48px] md:rounded-[64px] overflow-hidden relative border border-zinc-200 dark:border-white/5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.3)] cursor-pointer group/mainimg"
             >
-              <img src={selectedImage || product.image} alt={product.title} className="w-full h-full object-cover group-hover/mainimg:scale-105 transition-transform duration-1000" />
+              <img src={selectedImage || product.image} alt={String(product.title)} className="w-full h-full object-cover group-hover/mainimg:scale-105 transition-transform duration-1000" />
               <div className="absolute inset-0 bg-black/0 group-hover/mainimg:bg-black/10 transition-colors flex items-center justify-center">
                   <div className="bg-white dark:bg-zinc-900 text-black dark:text-white font-black text-[11px] uppercase tracking-[0.3em] px-10 py-5 rounded-full opacity-0 group-hover/mainimg:opacity-100 translate-y-8 group-hover/mainimg:translate-y-0 transition-all duration-500 shadow-2xl border border-white/20">
                       View at Store
@@ -176,7 +176,7 @@ export function ProductDetails() {
                 </div>
 
                 <h1 className="text-4xl md:text-6xl font-black text-zinc-900 dark:text-white mb-8 leading-[0.95] tracking-[-0.03em] uppercase font-display">
-                  {product.title}
+                  {String(product.title)}
                 </h1>
 
                 <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-10">
@@ -203,7 +203,7 @@ export function ProductDetails() {
                 </div>
 
                 <p className="text-xl text-zinc-600 dark:text-zinc-300 mb-10 leading-snug font-medium tracking-tight">
-                  {product.description}
+                  {String(product.description)}
                 </p>
 
                 <div className="space-y-6 mb-12">
@@ -261,7 +261,7 @@ export function ProductDetails() {
                   
                   <div className="grid grid-cols-2 gap-4">
                     <a 
-                      href={getWhatsAppLink(product.title, window.location.href)}
+                      href={getWhatsAppLink(String(product.title), window.location.href)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="bg-emerald-500 hover:bg-emerald-600 text-white font-black py-5 rounded-[24px] flex items-center justify-center gap-3 transition-all shadow-xl shadow-emerald-500/20 active:scale-[0.98] text-xs uppercase tracking-widest"
@@ -375,7 +375,7 @@ export function ProductDetails() {
               Get Deal <ExternalLink size={14} strokeWidth={3} />
             </button>
             <a 
-              href={getWhatsAppLink(product.title, window.location.origin + '/product/' + product.slug)}
+              href={getWhatsAppLink(String(product.title), window.location.origin + '/product/' + product.slug)}
               className="w-14 h-14 bg-emerald-500 text-white font-black rounded-2xl flex items-center justify-center shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
             >
               <MessageCircle size={22} />
