@@ -52,28 +52,30 @@ export const useProductStore = create<ProductState>()((set, get) => ({
         const prodUnsubscribe = onSnapshot(collection(db!, 'products'), (snapshot) => {
           const fetchedProducts = snapshot.docs.map(doc => {
             const data = doc.data();
-            // Ensure category is always a string (prevents crashes if object is stored)
+            // Ensure category is always a primitive string (prevents crashes if object is stored)
             const rawCategory = data.category;
-            const categoryString = typeof rawCategory === 'string' 
-              ? rawCategory 
-              : (rawCategory && typeof rawCategory === 'object' && rawCategory.name)
-                ? String(rawCategory.name)
-                : 'General';
+            let categoryString = 'General';
+            if (typeof rawCategory === 'string') {
+              categoryString = rawCategory;
+            } else if (rawCategory && typeof rawCategory === 'object') {
+              categoryString = String((rawCategory as any).name || 'General');
+            }
 
+            // Defensive mapping for all fields
             return {
               id: doc.id,
-              title: data.title || 'Untitled Product',
-              slug: data.slug || doc.id,
-              description: data.description || '',
+              title: typeof data.title === 'string' ? data.title : (data.title && typeof data.title === 'object' ? String((data.title as any).name || (data.title as any).title || 'Untitled') : 'Untitled Product'),
+              slug: typeof data.slug === 'string' ? data.slug : doc.id,
+              description: typeof data.description === 'string' ? data.description : (data.description && typeof data.description === 'object' ? String((data.description as any).name || (data.description as any).description || '') : ''),
               price: Number(data.price) || 0,
               originalPrice: Number(data.originalPrice) || 0,
               rating: Number(data.rating) || 4.5,
               reviewsCount: Number(data.reviewsCount) || 0,
-              image: data.image || '',
-              gallery: data.gallery || [],
+              image: typeof data.image === 'string' ? data.image : '',
+              gallery: Array.isArray(data.gallery) ? data.gallery.map(img => String(img || '')) : [],
               category: categoryString,
-              affiliateLink: data.affiliateLink || '#',
-              features: data.features || [],
+              affiliateLink: typeof data.affiliateLink === 'string' ? data.affiliateLink : '#',
+              features: Array.isArray(data.features) ? data.features.map(f => String(f || '')) : [],
               trending: !!data.trending
             } as Product;
           });
@@ -94,29 +96,32 @@ export const useProductStore = create<ProductState>()((set, get) => ({
         const catUnsubscribe = onSnapshot(collection(db!, 'categories'), (snapshot) => {
           const fetchedCats = snapshot.docs.map(doc => {
             const data = doc.data();
-            // Ensure name is always a string
+            // EXTREME Defensive mapping for name
             const rawName = data.name;
-            const nameString = typeof rawName === 'string'
-              ? rawName
-              : (rawName && typeof rawName === 'object' && !Array.isArray(rawName))
-                ? String((rawName as any).name || 'Category')
-                : 'Category';
+            let nameString = 'Category';
+            if (typeof rawName === 'string') {
+              nameString = rawName;
+            } else if (rawName && typeof rawName === 'object') {
+              // The error "object with keys {name, image}" implies data.name might be the WHOLE category object
+              const candidate = (rawName as any).name || (rawName as any).title;
+              nameString = typeof candidate === 'string' ? candidate : String(candidate || 'Category');
+            }
 
             return {
               name: nameString,
-              image: data.image as string
+              image: typeof data.image === 'string' ? data.image : ''
             };
           }).filter(cat => cat.name);
           
           if (fetchedCats.length > 0) {
             // Deduplicate by name to prevent duplicates in UI
-            const uniqueCats = Array.from(new Map(fetchedCats.map(c => [c.name, c])).values());
+            const uniqueCats = Array.from(new Map(fetchedCats.map(c => [String(c.name), c])).values());
             set({ categories: uniqueCats });
           } else {
             // Infer from products if categories collection is empty
             const inferredNames = Array.from(new Set(get().products.map(p => String(p.category))));
             if (inferredNames.length > 0) {
-              set({ categories: inferredNames.map(name => ({ name })) });
+              set({ categories: inferredNames.map(name => ({ name: String(name) })) });
             }
           }
         });
