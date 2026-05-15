@@ -52,6 +52,14 @@ export const useProductStore = create<ProductState>()((set, get) => ({
         const prodUnsubscribe = onSnapshot(collection(db!, 'products'), (snapshot) => {
           const fetchedProducts = snapshot.docs.map(doc => {
             const data = doc.data();
+            // Ensure category is always a string (prevents crashes if object is stored)
+            const rawCategory = data.category;
+            const categoryString = typeof rawCategory === 'string' 
+              ? rawCategory 
+              : (rawCategory && typeof rawCategory === 'object' && rawCategory.name)
+                ? String(rawCategory.name)
+                : 'General';
+
             return {
               id: doc.id,
               title: data.title || 'Untitled Product',
@@ -63,7 +71,7 @@ export const useProductStore = create<ProductState>()((set, get) => ({
               reviewsCount: Number(data.reviewsCount) || 0,
               image: data.image || '',
               gallery: data.gallery || [],
-              category: data.category || 'General',
+              category: categoryString,
               affiliateLink: data.affiliateLink || '#',
               features: data.features || [],
               trending: !!data.trending
@@ -84,10 +92,21 @@ export const useProductStore = create<ProductState>()((set, get) => ({
 
         // Listen to Categories
         const catUnsubscribe = onSnapshot(collection(db!, 'categories'), (snapshot) => {
-          const fetchedCats = snapshot.docs.map(doc => ({
-            name: doc.data().name as string,
-            image: doc.data().image as string
-          })).filter(cat => cat.name);
+          const fetchedCats = snapshot.docs.map(doc => {
+            const data = doc.data();
+            // Ensure name is always a string
+            const rawName = data.name;
+            const nameString = typeof rawName === 'string'
+              ? rawName
+              : (rawName && typeof rawName === 'object' && rawName.name)
+                ? String(rawName.name)
+                : '';
+
+            return {
+              name: nameString,
+              image: data.image as string
+            };
+          }).filter(cat => cat.name);
           
           if (fetchedCats.length > 0) {
             // Deduplicate by name to prevent duplicates in UI
