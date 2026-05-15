@@ -387,14 +387,14 @@ export function AdminDashboard() {
       <SEO title="Admin Dashboard" description="Secure management" />
       <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 relative overflow-hidden">
         {/* Background Mesh Gradients */}
-        <div className="fixed top-[-20%] left-[-10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
-        <div className="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[100px] pointer-events-none z-0"></div>
+        <div className="fixed top-[-20%] left-[-10%] w-150 h-150 bg-primary/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+        <div className="fixed bottom-[-10%] right-[-10%] w-125 h-125 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none z-0"></div>
 
         {/* Topbar */}
         <header className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/5 px-4 md:px-6 py-4 flex flex-col md:flex-row justify-between items-center sticky top-0 z-50 gap-4">
           <div className="flex items-center gap-3 md:gap-4 self-start md:self-auto">
             <div className="w-8 h-8 md:w-10 md:h-10 bg-primary/20 text-primary rounded-xl flex items-center justify-center shrink-0">
-              <Activity size={20} className="md:w-[24px] md:h-[24px]" />
+              <Activity size={20} className="md:w-6 md:h-6" />
             </div>
             <div>
               <h1 className="font-black text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] dark:text-white pb-0.5">Admin Console</h1>
@@ -487,9 +487,9 @@ export function AdminDashboard() {
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Chart */}
-                <div className="lg:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-gray-100 dark:border-white/5 shadow-xl min-h-[400px]">
+                <div className="lg:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-gray-100 dark:border-white/5 shadow-xl min-h-100">
                   <h2 className="text-xl font-black mb-6 uppercase tracking-tighter dark:text-white">Traffic Overview</h2>
-                  <div className="h-[320px] w-full min-w-0 relative">
+                  <div className="h-80 w-full min-w-0 relative">
                     {chartData.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
@@ -588,7 +588,7 @@ export function AdminDashboard() {
               </div>
 
               {showAddForm && (
-                <div className="bg-white dark:bg-zinc-900 p-8 rounded-[32px] border border-gray-100 dark:border-white/5 shadow-2xl">
+                <div className="bg-white dark:bg-zinc-900 p-8 rounded-4xl border border-gray-100 dark:border-white/5 shadow-2xl">
                   <div className="mb-6 flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                     <h3 className="text-xs font-black uppercase tracking-widest text-primary">
@@ -613,7 +613,7 @@ export function AdminDashboard() {
                           required
                           value={newProduct.description}
                           onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setNewProduct({...newProduct, description: e.target.value})}
-                          className="w-full bg-gray-50 dark:bg-zinc-800 p-4 rounded-xl border-none focus:ring-2 ring-primary dark:text-white font-bold min-h-[100px]"
+                          className="w-full bg-gray-50 dark:bg-zinc-800 p-4 rounded-xl border-none focus:ring-2 ring-primary dark:text-white font-bold min-h-25"
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
@@ -696,7 +696,7 @@ export function AdminDashboard() {
 
                       {/* Gallery Images Section */}
                       <div className="pt-4 border-t border-gray-100 dark:border-white/5">
-                        <label className="block text-[10px] font-black uppercase text-gray-400 mb-4 flex justify-between items-center">
+                        <label className="text-[10px] font-black uppercase text-gray-400 mb-4 flex justify-between items-center">
                           Gallery Images
                           <button 
                             type="button" 
@@ -909,7 +909,7 @@ export function AdminDashboard() {
                 <p className="text-gray-500 font-bold text-xs uppercase tracking-widest mt-2">Manage your admin credentials</p>
               </div>
 
-              <div className="bg-white dark:bg-zinc-900 p-8 rounded-[32px] border border-gray-100 dark:border-white/5 shadow-2xl">
+              <div className="bg-white dark:bg-zinc-900 p-8 rounded-4xl border border-gray-100 dark:border-white/5 shadow-2xl">
                 <h3 className="font-black text-xs uppercase tracking-widest text-primary mb-6">Change Login Password</h3>
                 
                 <form onSubmit={handleUpdatePassword} className="space-y-6">
