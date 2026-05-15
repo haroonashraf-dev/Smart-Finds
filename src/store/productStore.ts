@@ -27,6 +27,7 @@ interface ProductState {
   deleteProduct: (id: string) => Promise<void>;
   addCategory: (category: string) => Promise<void>;
   deleteCategory: (category: string) => Promise<void>;
+  updateCategory: (oldName: string, newName: string) => Promise<void>;
   initialize: () => Promise<void>;
   filteredProducts: () => Product[];
 }
@@ -196,23 +197,83 @@ export const useProductStore = create<ProductState>()((set, get) => ({
   },
 
   deleteCategory: async (category) => {
+    if (category === 'General') return; // Cannot delete the default category
+
+    const products = get().products;
     const newCategories = get().categories.filter(c => c !== category);
-    set({ categories: newCategories });
+    
+    // Ensure 'General' category exists
+    if (!newCategories.includes('General')) {
+      newCategories.push('General');
+    }
+
+    const updatedProducts = products.map(p => 
+      p.category === category ? { ...p, category: 'General' } : p
+    );
+    
+    set({ categories: newCategories, products: updatedProducts });
 
     if (isFirebaseConfigured && db) {
       try {
+        // 1. Delete from categories collection
         const q = query(collection(db!, 'categories'), where('name', '==', category));
         const snap = await getDocs(q);
         const deletePromises = snap.docs.map(d => deleteDoc(doc(db!, 'categories', d.id)));
-        await Promise.all(deletePromises);
+        
+        // 2. Ensure General category document exists in Firestore
+        const genQ = query(collection(db!, 'categories'), where('name', '==', 'General'));
+        const genSnap = await getDocs(genQ);
+        if (genSnap.empty) {
+          await addDoc(collection(db!, 'categories'), { name: 'General' });
+        }
+
+        // 3. Update products in this category to 'General' in Firestore
+        const prodQ = query(collection(db!, 'products'), where('category', '==', category));
+        const prodSnap = await getDocs(prodQ);
+        const updateProdPromises = prodSnap.docs.map(d => updateDoc(doc(db!, 'products', d.id), { category: 'General' }));
+        
+        await Promise.all([...deletePromises, ...updateProdPromises]);
       } catch (error) {
-        handleFirestoreError(error, OperationType.DELETE, 'categories');
+        handleFirestoreError(error, OperationType.DELETE, 'categories-reassignment');
       }
     } else {
       await fetch('/api/data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ products: get().products, categories: newCategories })
+        body: JSON.stringify({ products: updatedProducts, categories: newCategories })
+      });
+    }
+  },
+
+  updateCategory: async (oldName, newName) => {
+    if (newName === oldName || !newName.trim()) return;
+    
+    const newCategories = get().categories.map(c => c === oldName ? newName : c);
+    const updatedProducts = get().products.map(p => p.category === oldName ? { ...p, category: newName } : p);
+    
+    set({ categories: newCategories, products: updatedProducts });
+
+    if (isFirebaseConfigured && db) {
+      try {
+        // 1. Update in categories collection
+        const q = query(collection(db!, 'categories'), where('name', '==', oldName));
+        const snap = await getDocs(q);
+        const updateCatPromises = snap.docs.map(d => updateDoc(doc(db!, 'categories', d.id), { name: newName }));
+        
+        // 2. Update products in this category in Firestore (Batch or individual updates)
+        const prodQ = query(collection(db!, 'products'), where('category', '==', oldName));
+        const prodSnap = await getDocs(prodQ);
+        const updateProdPromises = prodSnap.docs.map(d => updateDoc(doc(db!, 'products', d.id), { category: newName }));
+        
+        await Promise.all([...updateCatPromises, ...updateProdPromises]);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, 'categories/products-ref');
+      }
+    } else {
+      await fetch('/api/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ products: updatedProducts, categories: newCategories })
       });
     }
   },

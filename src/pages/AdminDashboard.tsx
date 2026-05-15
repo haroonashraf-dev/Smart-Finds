@@ -31,7 +31,7 @@ type DashboardTab = 'analytics' | 'products' | 'categories' | 'settings';
 export function AdminDashboard() {
   const navigate = useNavigate();
   const { clicks, getTopProducts, subscribeToInteractions } = useAnalyticsStore();
-  const { products, categories, addProduct, updateProduct, deleteProduct, addCategory, deleteCategory } = useProductStore();
+  const { products, categories, addProduct, updateProduct, deleteProduct, addCategory, deleteCategory, updateCategory } = useProductStore();
   const [isAuth, setIsAuth] = useState(false);
   const [activeTab, setActiveTab] = useState<DashboardTab>('analytics');
 
@@ -43,6 +43,7 @@ export function AdminDashboard() {
   }, [activeTab, isAuth, subscribeToInteractions]);
 
   // Form states
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [newProduct, setNewProduct] = useState<Partial<Product>>({
     title: '',
     description: '',
@@ -55,6 +56,8 @@ export function AdminDashboard() {
   });
   const [galleryInputs, setGalleryInputs] = useState<string[]>(['']);
   const [newCategory, setNewCategory] = useState('');
+  const [editingCategory, setEditingCategory] = useState<string | null>(null);
+  const [editCategoryName, setEditCategoryName] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [changePasswordData, setChangePasswordData] = useState({
     newPassword: '',
@@ -206,26 +209,35 @@ export function AdminDashboard() {
 
   const handleAddProduct = async (e: FormEvent) => {
     e.preventDefault();
-    const id = `p${Date.now()}`;
-    const slug = newProduct.title?.toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, '') || id;
     
     // Filter out empty gallery inputs
     const gallery = galleryInputs.filter((url: string) => url.trim() !== '');
 
-    const productData: Product = {
+    const productData = {
       ...newProduct,
-      id,
-      slug,
       price: parseFloat(formInputs.price) || 0,
       originalPrice: parseFloat(formInputs.originalPrice) || 0,
       rating: parseFloat(formInputs.rating) || 4.5,
       reviewsCount: parseInt(formInputs.reviewsCount) || 0,
       gallery: gallery.length > 0 ? gallery : [newProduct.image || ''],
-    } as Product;
+    };
 
     try {
-      await addProduct(productData);
+      if (editingProductId) {
+        await updateProduct(editingProductId, productData);
+        alert('Product updated successfully!');
+      } else {
+        const id = `p${Date.now()}`;
+        const slug = newProduct.title?.toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, '') || id;
+        await addProduct({
+          ...productData,
+          id,
+          slug
+        } as Product);
+        alert('Product deployed successfully to global storefront!');
+      }
 
+      setEditingProductId(null);
       setNewProduct({
         title: '',
         description: '',
@@ -243,11 +255,34 @@ export function AdminDashboard() {
       });
       setGalleryInputs(['']);
       setShowAddForm(false);
-      alert('Product deployed successfully to global storefront!');
     } catch (err) {
-      console.error("Failed to add product:", err);
-      alert('Error deploying product. Check console for details.');
+      console.error("Failed to save product:", err);
+      alert('Error saving product. Check console for details.');
     }
+  };
+
+  const startEditingProduct = (product: Product) => {
+    setEditingProductId(product.id);
+    setNewProduct({
+      title: product.title,
+      description: product.description,
+      category: product.category,
+      image: product.image,
+      affiliateLink: product.affiliateLink,
+      features: product.features,
+      trending: product.trending,
+      gallery: product.gallery
+    });
+    setFormInputs({
+      price: product.price.toString(),
+      originalPrice: product.originalPrice.toString(),
+      rating: product.rating.toString(),
+      reviewsCount: product.reviewsCount.toString()
+    });
+    setGalleryInputs(product.gallery.length > 0 ? product.gallery : ['']);
+    setShowAddForm(true);
+    // Scroll to form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleAddCategory = (e: FormEvent) => {
@@ -259,10 +294,34 @@ export function AdminDashboard() {
     }
   };
 
+  const handleUpdateCategory = async (oldName: string) => {
+    if (editCategoryName.trim() && editCategoryName !== oldName) {
+      try {
+        await updateCategory(oldName, editCategoryName.trim());
+        setEditingCategory(null);
+        alert('Category renamed successfully and all products updated!');
+      } catch (err) {
+        console.error("Failed to update category:", err);
+        alert('Error updating category.');
+      }
+    } else {
+      setEditingCategory(null);
+    }
+  };
+
   const handleDeleteCategory = (category: string) => {
+    if (category === 'General') {
+      alert('The "General" category is the default fallback and cannot be deleted.');
+      return;
+    }
+
     const productCount = products.filter(p => p.category === category).length;
     if (productCount > 0) {
-      if (!confirm(`Warning: There are ${productCount} products in this category. Deleting the category will decouple these products. Continue?`)) {
+      if (!confirm(`This category contains ${productCount} products. Deleting it will automatically move all these products to the "General" category. Continue?`)) {
+        return;
+      }
+    } else {
+      if (!confirm(`Are you sure you want to delete the "${category}" category?`)) {
         return;
       }
     }
@@ -499,7 +558,28 @@ export function AdminDashboard() {
               <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-black dark:text-white uppercase tracking-tighter">Inventory Control</h2>
                 <button 
-                  onClick={() => setShowAddForm(!showAddForm)}
+                  onClick={() => {
+                    if (showAddForm && editingProductId) {
+                      setEditingProductId(null);
+                      setNewProduct({
+                        title: '',
+                        description: '',
+                        category: categories[0] || '',
+                        image: '',
+                        affiliateLink: '',
+                        features: [''],
+                        trending: false,
+                      });
+                      setFormInputs({
+                        price: '0',
+                        originalPrice: '0',
+                        rating: '4.5',
+                        reviewsCount: '0'
+                      });
+                      setGalleryInputs(['']);
+                    }
+                    setShowAddForm(!showAddForm);
+                  }}
                   className="bg-primary text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-primary/30"
                 >
                   {showAddForm ? <X size={16} /> : <Plus size={16} />} 
@@ -509,6 +589,12 @@ export function AdminDashboard() {
 
               {showAddForm && (
                 <div className="bg-white dark:bg-zinc-900 p-8 rounded-[32px] border border-gray-100 dark:border-white/5 shadow-2xl">
+                  <div className="mb-6 flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    <h3 className="text-xs font-black uppercase tracking-widest text-primary">
+                      {editingProductId ? `Editing Product: ${newProduct.title}` : 'Drafting New Entry'}
+                    </h3>
+                  </div>
                   <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <div>
@@ -681,7 +767,7 @@ export function AdminDashboard() {
 
                     <div className="md:col-span-2 pt-4">
                       <button type="submit" className="w-full bg-zinc-900 dark:bg-white text-white dark:text-black py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-[0.98] transition-all">
-                        Deploy Product
+                        {editingProductId ? 'Update Product' : 'Deploy Product'}
                       </button>
                     </div>
                   </form>
@@ -694,7 +780,20 @@ export function AdminDashboard() {
                     <div className="aspect-square rounded-2xl bg-gray-100 dark:bg-zinc-800 overflow-hidden mb-4 relative">
                       <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
                       <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => deleteProduct(p.id)} className="p-2 bg-red-500 text-white rounded-lg shadow-lg"><Trash2 size={14} /></button>
+                        <button 
+                          onClick={() => startEditingProduct(p)} 
+                          className="p-2 bg-blue-500 text-white rounded-lg shadow-lg"
+                          title="Edit Product"
+                        >
+                          <Edit3 size={14} />
+                        </button>
+                        <button 
+                          onClick={() => deleteProduct(p.id)} 
+                          className="p-2 bg-red-500 text-white rounded-lg shadow-lg"
+                          title="Delete Product"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </div>
                     <div className="px-2 pb-2">
@@ -743,18 +842,56 @@ export function AdminDashboard() {
               <div className="grid grid-cols-1 gap-4">
                 {categories.map(c => (
                   <div key={c} className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-gray-100 dark:border-white/5 flex justify-between items-center group">
-                    <span className="font-black text-xs uppercase tracking-widest dark:text-white">{c}</span>
+                    {editingCategory === c ? (
+                      <div className="flex-1 flex gap-2 mr-4">
+                        <input 
+                          type="text"
+                          value={editCategoryName}
+                          onChange={(e) => setEditCategoryName(e.target.value)}
+                          className="flex-1 bg-gray-50 dark:bg-zinc-800 p-2 rounded-xl border-none focus:ring-2 ring-primary dark:text-white font-bold text-xs"
+                          autoFocus
+                        />
+                        <button 
+                          onClick={() => handleUpdateCategory(c)}
+                          className="p-2 bg-emerald-500 text-white rounded-lg"
+                        >
+                          <Check size={14} />
+                        </button>
+                        <button 
+                          onClick={() => setEditingCategory(null)}
+                          className="p-2 bg-gray-500 text-white rounded-lg"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="font-black text-xs uppercase tracking-widest dark:text-white">{c}</span>
+                    )}
+                    
                     <div className="flex items-center gap-4">
                       <span className="bg-gray-100 dark:bg-zinc-800 px-3 py-1 rounded-lg text-[10px] font-black text-gray-500">
                         {products.filter(p => p.category === c).length} Products
                       </span>
-                      <button 
-                        onClick={() => handleDeleteCategory(c)}
-                        className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                        title="Delete Category"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <div className="flex gap-1">
+                        <button 
+                          onClick={() => {
+                            setEditingCategory(c);
+                            setEditCategoryName(c);
+                          }}
+                          className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
+                          title="Rename Category"
+                        >
+                          <Edit3 size={16} />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteCategory(c)}
+                          className={`p-2 transition-colors ${c === 'General' ? 'opacity-20 cursor-not-allowed text-gray-300' : 'text-gray-400 hover:text-red-500'}`}
+                          title={c === 'General' ? 'Default category cannot be deleted' : 'Delete Category'}
+                          disabled={c === 'General'}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
