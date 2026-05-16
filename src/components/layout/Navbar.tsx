@@ -43,14 +43,14 @@ export function Navbar() {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 h-16 md:h-20 flex items-center justify-between gap-10">
+        <div className="container mx-auto px-4 h-14 md:h-20 flex items-center justify-between gap-2 md:gap-10">
           
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group shrink-0">
-            <div className="bg-primary text-white p-2.5 rounded-2xl group-hover:rotate-12 group-hover:scale-110 transition-all duration-500 shadow-[0_10px_20px_rgba(255,71,71,0.3)]">
-              <ShoppingBag size={24} strokeWidth={2.5} />
+          <Link to="/" className="flex items-center gap-1.5 sm:gap-3 group shrink-0">
+            <div className="bg-primary text-white p-1.5 sm:p-2.5 rounded-lg sm:rounded-2xl group-hover:rotate-12 group-hover:scale-110 transition-all duration-500 shadow-[0_10px_20px_rgba(255,71,71,0.3)]">
+              <ShoppingBag className="w-4 h-4 sm:w-6 sm:h-6" strokeWidth={2.5} />
             </div>
-            <span className="font-black text-xl sm:text-3xl tracking-[-0.04em] text-zinc-950 dark:text-white uppercase font-display">
+            <span className="font-black text-[10px] xs:text-xs sm:text-3xl tracking-[-0.04em] text-zinc-950 dark:text-white uppercase font-display">
               Smart Living <span className="text-primary italic">Finds</span>
             </span>
           </Link>
@@ -78,27 +78,27 @@ export function Navbar() {
           </div>
 
           {/* User Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={toggleTheme}
-              className="p-3 rounded-2xl glass-card hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all text-zinc-600 dark:text-zinc-300 border-zinc-200/50 dark:border-white/10"
+              className="p-2 sm:p-3 rounded-lg sm:rounded-2xl glass-card hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all text-zinc-600 dark:text-zinc-300 border-zinc-200/50 dark:border-white/10"
             >
-              {theme === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
+              {theme === 'dark' ? <Sun className="w-4 h-4 sm:w-6 sm:h-6" /> : <Moon className="w-4 h-4 sm:w-6 sm:h-6" />}
             </button>
+            
+            <Link to="/admin-secure-dashboard" className="p-2 sm:p-3 rounded-lg sm:rounded-2xl glass-card hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all text-zinc-600 dark:text-zinc-300 border-zinc-200/50 dark:border-white/10">
+               <UserCog className="w-4 h-4 sm:w-6 sm:h-6" />
+            </Link>
             
             <button className="hidden sm:flex p-3 rounded-2xl glass-card hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all text-zinc-600 dark:text-zinc-300 border-zinc-200/50 dark:border-white/10">
               <Heart size={24} />
             </button>
-
-            <Link to="/categories" className="md:hidden p-3 rounded-2xl bg-primary text-white shadow-[0_10px_20px_rgba(255,71,71,0.3)] transition-transform active:scale-95">
-              <Search size={22} strokeWidth={3} />
-            </Link>
           </div>
         </div>
       </header>
 
       {/* Mobile Bottom Navigation */}
-      <div className="md:hidden flex overflow-hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-sm glass-card border border-zinc-200/50 dark:border-white/10 rounded-[28px] p-2 items-center justify-between shadow-[0_20px_40px_rgba(0,0,0,0.2)]">
+      <div className="md:hidden flex fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[96%] max-w-sm glass-card border border-zinc-200/50 dark:border-white/10 rounded-[20px] p-1 items-center justify-between shadow-[0_20px_40px_rgba(0,0,0,0.3)]">
         {navLinks.map((link) => {
           const isActive = location.pathname === link.path;
           const Icon = link.icon;
@@ -107,12 +107,12 @@ export function Navbar() {
               key={link.name}
               to={link.path}
               className={cn(
-                "flex flex-col items-center gap-1.5 px-5 py-3 rounded-[20px] transition-all duration-500",
-                isActive ? "bg-primary text-white scale-105 shadow-lg shadow-primary/20" : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                "flex flex-col items-center gap-0.5 flex-1 py-2 rounded-[16px] transition-all duration-300",
+                isActive ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-zinc-500 dark:text-zinc-400"
               )}
             >
-              <Icon size={22} strokeWidth={isActive ? 3 : 2} />
-              <span className="text-[9px] font-black uppercase tracking-widest">{link.name}</span>
+              <Icon size={16} strokeWidth={isActive ? 3 : 2} />
+              <span className="text-[7px] font-black uppercase tracking-widest">{link.name}</span>
             </Link>
           );
         })}

@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Star, MessageCircle, Heart, Zap, Share2 } from 'lucide-react';
+import { Star, MessageCircle, Heart, Zap, Share2, ArrowUpRight } from 'lucide-react';
 import { Product } from '../../data/mockProducts';
 import { getWhatsAppLink, formatCurrency } from '../../lib/utils';
 import { useAnalyticsStore } from '../../store/analyticsStore';
@@ -32,33 +32,29 @@ export const ProductCard = memo(({ product, index = 0 }: ProductCardProps) => {
     >
       <div 
         onClick={handleAffiliateClick}
-        className="relative aspect-square overflow-hidden bg-zinc-100 dark:bg-zinc-800/50 block cursor-pointer group/img"
+        className="relative aspect-[2/1] sm:aspect-[2.2/1] overflow-hidden bg-zinc-100 dark:bg-zinc-800/50 block cursor-pointer group/img"
       >
         {discount > 0 && (
-          <div className="absolute top-4 left-4 z-10 bg-primary text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-xl uppercase tracking-tighter animate-pulse">
-            -{discount}% OFF
+          <div className="absolute top-1 sm:top-2 left-1 sm:left-2 z-10 bg-primary text-white text-[6px] sm:text-[9px] font-black px-1 sm:px-2 py-0.5 rounded-full shadow-xl uppercase tracking-tighter">
+            -{discount}%
           </div>
         )}
-        <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 opacity-0 group-hover/img:opacity-100 transition-all duration-300 translate-x-4 group-hover/img:translate-x-0" onClick={(e) => e.stopPropagation()}>
+        <div className="absolute top-1 sm:top-2 right-1 sm:top-2 z-10 flex flex-col gap-1 opacity-0 group-hover/img:opacity-100 transition-all duration-300 translate-x-4 group-hover/img:translate-x-0" onClick={(e) => e.stopPropagation()}>
           <button 
             onClick={(e) => {
               e.preventDefault();
               navigator.clipboard.writeText(window.location.origin + '/product/' + product.slug);
               alert('Link copied to clipboard!');
             }}
-            className="p-2.5 glass-card text-zinc-900 dark:text-white rounded-xl shadow-lg hover:bg-primary hover:text-white transition-all duration-300"
+            className="p-1 sm:p-2 glass-card text-zinc-900 dark:text-white rounded-md shadow-lg hover:bg-primary hover:text-white transition-all duration-300"
             title="Copy Link"
           >
-            <Share2 size={16} />
-          </button>
-          <button className="p-2.5 glass-card text-zinc-900 dark:text-white rounded-xl shadow-lg hover:bg-primary hover:text-white transition-all duration-300">
-            <Heart size={16} />
+            <Share2 size={10} className="sm:w-3.5 sm:h-3.5" />
           </button>
         </div>
         
-        {/* Choice Badge - AliExpress Style */}
-        <div className="absolute bottom-4 left-4 z-10 bg-zinc-900/80 dark:bg-zinc-100/10 backdrop-blur-md text-white text-[9px] font-black px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg group-hover/img:scale-105 transition-transform border border-white/10 uppercase tracking-widest">
-          <Zap size={10} className="fill-current text-primary" /> Choice <span className="opacity-40">|</span> Verified
+        <div className="absolute bottom-1 sm:bottom-2 left-1 sm:left-2 z-10 bg-zinc-900/80 dark:bg-zinc-100/10 backdrop-blur-md text-white text-[5px] sm:text-[8px] font-black px-1 sm:px-2 py-0.5 rounded-full border border-white/10 uppercase tracking-widest">
+          Verified
         </div>
 
         <img 
@@ -67,67 +63,50 @@ export const ProductCard = memo(({ product, index = 0 }: ProductCardProps) => {
           className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-1000 ease-out" 
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors flex items-center justify-center">
-            <div className="bg-white dark:bg-zinc-900 text-black dark:text-white font-black text-[10px] uppercase tracking-[0.2em] px-8 py-4 rounded-full opacity-0 group-hover/img:opacity-100 translate-y-8 group-hover/img:translate-y-0 shadow-2xl transition-all duration-500 border border-white/20">
-                Quick View
-            </div>
-        </div>
       </div>
       
-      <div className="p-5 flex flex-col flex-1">
-        <div className="flex items-center gap-2 mb-3">
+      <div className="p-1.5 sm:p-3 flex flex-col flex-1">
+        <div className="flex items-center gap-0.5 sm:gap-1 mb-0.5 sm:mb-1.5">
           <div className="flex items-center gap-0.5 text-orange-500">
             {[1, 2, 3, 4, 5].map(i => (
-              <Star key={i} size={11} className={i <= Math.round(product.rating) ? "fill-current" : "opacity-30"} />
+              <Star key={i} size={i <= Math.round(product.rating) ? 6 : 5} className={i <= Math.round(product.rating) ? "fill-current" : "opacity-30"} />
             ))}
           </div>
-          <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">({product.reviewsCount} reviews)</span>
+          <span className="text-[6px] sm:text-[9px] font-black text-zinc-400 uppercase tracking-tight">({product.reviewsCount})</span>
         </div>
         
         <Link to={`/product/${product.slug}`} className="group-hover:text-primary transition-colors">
-          <h3 className="font-bold text-lg leading-[1.2] mb-3 text-zinc-900 dark:text-white h-11 line-clamp-2 uppercase tracking-tight font-display">
+          <h3 className="font-bold text-[8px] sm:text-sm leading-[1] sm:leading-[1.1] mb-0.5 sm:mb-1.5 text-zinc-900 dark:text-white h-auto sm:h-8 line-clamp-2 uppercase tracking-tight font-display">
             {String(product.title)}
           </h3>
-                </Link>
+        </Link>
         
-        <div className="mt-auto pt-4">
-          <div className="flex items-baseline gap-2 mb-4">
-            <span className="text-3xl font-black text-primary tracking-tighter font-display">{formatCurrency(product.price)}</span>
+        <div className="mt-auto pt-0.5 sm:pt-1">
+          <div className="flex items-baseline gap-1 mb-1 sm:mb-2 text-primary">
+            <span className="text-xs sm:text-xl font-black tracking-tighter font-display">{formatCurrency(product.price)}</span>
             {product.originalPrice > product.price && (
-              <span className="text-sm text-zinc-400 line-through font-medium opacity-60 tracking-tight">{formatCurrency(product.originalPrice)}</span>
+              <span className="text-[6px] sm:text-xs text-zinc-400 line-through font-medium opacity-50 tracking-tight">{formatCurrency(product.originalPrice)}</span>
             )}
           </div>
 
-          <div className="flex items-center gap-2 mb-6">
-             <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-black px-2.5 py-1 rounded-full border border-emerald-500/10 whitespace-nowrap uppercase tracking-widest">
-               Free Ship
-             </div>
-             <div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] font-black px-2.5 py-1 rounded-full border border-blue-500/10 whitespace-nowrap uppercase tracking-widest">
-               Choice
-             </div>
-          </div>
-          
-          <div className="flex flex-col gap-3">
-            <div className="flex gap-2">
+          <div className="flex flex-col gap-0.5 sm:gap-2">
+            <div className="flex gap-1">
               <button 
                 onClick={handleAffiliateClick}
-                className="flex-1 bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-primary dark:hover:bg-primary dark:hover:text-white font-black text-xs py-4 px-6 rounded-2xl flex items-center justify-center gap-3 shadow-xl transition-all duration-300 active:scale-95 uppercase tracking-widest"
+                className="flex-1 bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-primary dark:hover:bg-primary dark:hover:text-white font-black text-[6.5px] sm:text-xs py-1 sm:py-2.5 px-1 sm:px-4 rounded-sm sm:rounded-xl flex items-center justify-center gap-1 sm:gap-2 shadow-sm transition-all duration-300 active:scale-95 uppercase tracking-tighter sm:tracking-widest"
               >
-                Buy Now
-                <Zap size={14} className="fill-current" />
+                GET DEAL
+                <ArrowUpRight size={7} className="sm:w-3.5 sm:h-3.5" />
               </button>
               <a 
                 href={getWhatsAppLink(String(product.title), window.location.origin + '/product/' + product.slug)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-14 h-14 flex items-center justify-center glass-card text-zinc-600 dark:text-zinc-400 rounded-2xl hover:bg-emerald-500 hover:text-white hover:border-emerald-500 transition-all shrink-0 active:scale-95"
+                className="w-5 h-5 sm:w-10 sm:h-10 flex items-center justify-center glass-card text-zinc-600 dark:text-zinc-400 rounded-sm sm:rounded-xl hover:bg-emerald-500 hover:text-white transition-all shrink-0 active:scale-95"
               >
-                <MessageCircle size={22} />
+                <MessageCircle size={9} className="sm:w-5 sm:h-5" />
               </a>
             </div>
-            <p className="text-[8px] text-zinc-400 font-bold uppercase tracking-[0.2em] text-center opacity-40">
-              *Price accurate today
-            </p>
           </div>
         </div>
       </div>

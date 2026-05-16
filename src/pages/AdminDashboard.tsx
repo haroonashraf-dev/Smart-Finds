@@ -657,6 +657,27 @@ export function AdminDashboard() {
                           />
                         </div>
                       </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-black uppercase text-gray-400 mb-2">Rating (0-5)</label>
+                          <input 
+                            type="number" step="0.1" min="0" max="5" required
+                            value={formInputs.rating}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) => setFormInputs({...formInputs, rating: e.target.value})}
+                            className="w-full bg-gray-50 dark:bg-zinc-800 p-4 rounded-xl border-none focus:ring-2 ring-primary dark:text-white font-bold"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black uppercase text-gray-400 mb-2">Reviews Count</label>
+                          <input 
+                            type="number" min="0" required
+                            value={formInputs.reviewsCount}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) => setFormInputs({...formInputs, reviewsCount: e.target.value})}
+                            className="w-full bg-gray-50 dark:bg-zinc-800 p-4 rounded-xl border-none focus:ring-2 ring-primary dark:text-white font-bold"
+                          />
+                        </div>
+                      </div>
                     </div>
 
                     <div className="space-y-4">
